@@ -22,7 +22,6 @@ jarek@kingston.ac.uk
 #define __FONT_H__
 
 #include <string>
-
 #include "Graphics.h"
 
 class EXT_DECL CFont
@@ -50,10 +49,10 @@ public:
 
 	void SetSize(int size)									{ m_nPtSize = size; }
 
-	int DrawText(int x, int y, std::string Text)			{ return m_pG->DrawText(x, y, m_fontFace, m_nPtSize, m_color, Text); }
+	int drawText(int x, int y, std::string Text)			{ return m_pG->DrawText(x, y, m_fontFace, m_nPtSize, m_color, Text); }
 	int DrawNumber(int x, int y, int number)				{ char Text[128]; _itoa_s(number, Text, 10); return m_pG->DrawText(x, y, m_fontFace, m_nPtSize, m_color, Text); }
 
-	int DrawText(int x, int y, std::string Text, const CColor& color, int size)		{ return m_pG->DrawText(x, y, m_fontFace, size, color, Text); }
+	int drawText(int x, int y, std::string Text, const CColor& color, int size)		{ return m_pG->DrawText(x, y, m_fontFace, size, color, Text); }
 	int DrawNumber(int x, int y, int number, const CColor& color, int size)			{ char Text[128]; _itoa_s(number, Text, 10); return m_pG->DrawText(x, y, m_fontFace, size, color, Text); }
 
 	int DrawChar(int x, int y, char c)						{ return m_pG->DrawText(x, y, m_fontFace, m_nPtSize, m_color, std::string(1, c)); }

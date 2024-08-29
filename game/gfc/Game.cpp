@@ -17,6 +17,7 @@ jarek@kingston.ac.uk
 #include "GameApp.h"
 #include "Graphics.h"
 
+#include "sdl/include/SDL.h"
 
 CGame::CGame() : m_dim(0, 0)
 {
@@ -50,7 +51,7 @@ CVectorI CGame::GetMouseCoords()
 	return CVectorI(x, y);
 }
 
-void CGame::GetMouseCoords(Uint16 &x, Uint16 &y)
+void CGame::GetMouseCoords(uint16_t&x, uint16_t&y)
 {
 	int _x, _y;
 	SDL_GetMouseState(&_x, &_y);
@@ -247,22 +248,22 @@ void CGame::DispatchEvents(SDL_Event* pEvent)
 // Generic Event
 bool CGame::OnEvent(SDL_Event* pEvent)									{ return false; }
 // Keyboard events
-void CGame::OnKeyDown(SDLKey sym,SDLMod mod,Uint16 unicode)				{ }
-void CGame::OnKeyUp(SDLKey sym,SDLMod mod,Uint16 unicode)				{ }
+void CGame::OnKeyDown(SDLKey sym,SDLMod mod, uint16_t unicode)			{ }
+void CGame::OnKeyUp(SDLKey sym,SDLMod mod, uint16_t unicode)			{ }
 // Mouse events
-void CGame::OnMouseMove(Uint16 x,Uint16 y,Sint16 relx,Sint16 rely,bool bLeft,bool bRight,bool bMiddle)	{ }
-void CGame::OnLButtonDown(Uint16 x,Uint16 y)							{ }
-void CGame::OnLButtonUp(Uint16 x,Uint16 y)								{ }
-void CGame::OnRButtonDown(Uint16 x,Uint16 y)							{ }
-void CGame::OnRButtonUp(Uint16 x,Uint16 y)								{ }
-void CGame::OnMButtonDown(Uint16 x,Uint16 y)							{ }
-void CGame::OnMButtonUp(Uint16 x,Uint16 y)								{ }
+void CGame::OnMouseMove(uint16_t x, uint16_t y, int16_t relx, int16_t rely,bool bLeft,bool bRight,bool bMiddle)	{ }
+void CGame::OnLButtonDown(uint16_t x, uint16_t y)						{ }
+void CGame::OnLButtonUp(uint16_t x, uint16_t y)							{ }
+void CGame::OnRButtonDown(uint16_t x, uint16_t y)						{ }
+void CGame::OnRButtonUp(uint16_t x, uint16_t y)							{ }
+void CGame::OnMButtonDown(uint16_t x, uint16_t y)						{ }
+void CGame::OnMButtonUp(uint16_t x, uint16_t y)							{ }
 // Joystick events
-void CGame::OnJoyAxis(Uint8 which,Uint8 axis,Sint16 value)				{ }
-void CGame::OnJoyButtonDown(Uint8 which,Uint8 button)					{ }
-void CGame::OnJoyButtonUp(Uint8 which,Uint8 button)						{ }
-void CGame::OnJoyHat(Uint8 which,Uint8 hat,Uint8 value)					{ }
-void CGame::OnJoyBall(Uint8 which,Uint8 ball,Sint16 xrel,Sint16 yrel)	{ }
+void CGame::OnJoyAxis(uint8_t which, uint8_t axis, int16_t value)			{ }
+void CGame::OnJoyButtonDown(uint8_t which, uint8_t button)					{ }
+void CGame::OnJoyButtonUp(uint8_t which, uint8_t button)						{ }
+void CGame::OnJoyHat(uint8_t which, uint8_t hat, uint8_t value)					{ }
+void CGame::OnJoyBall(uint8_t which, uint8_t ball, int16_t xrel, int16_t yrel)	{ }
 // Active Events (keyboard)
 void CGame::OnInputFocus()												{ }
 void CGame::OnInputBlur()												{ }
@@ -276,5 +277,5 @@ void CGame::OnRestore()													{ PauseGame(false); }
 void CGame::OnResize(int w,int h)										{ }
 void CGame::OnExpose()													{ }
 //User Event
-void CGame::OnUserEvent(Uint8 type,int code,void* data1,void* data2)	{ }
+void CGame::OnUserEvent(uint8_t type,int code,void* data1,void* data2)	{ }
 

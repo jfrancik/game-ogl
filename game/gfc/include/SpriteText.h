@@ -14,19 +14,21 @@ jarek@kingston.ac.uk
 ****************************************************************************/
 #pragma once
 
+#include "Sprite.h"
+
 class EXT_DECL CSpriteText : public CSprite
 {
-	Sint16 m_align, m_valign;
+	int16_t m_align, m_valign;
 	std::string m_strFont;
-	Sint16 m_nPtSize;
+	int16_t m_nPtSize;
 	std::string m_text;
 	CColor m_color;
 
 public:
-	CSpriteText(CVector pt, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time);
-	CSpriteText(CVector pt, Sint16 align, Sint16 valign, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time);
-	CSpriteText(float x, float y, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time);
-	CSpriteText(float x, float y, Sint16 align, Sint16 valign, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time);
+	CSpriteText(CVector pt, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time);
+	CSpriteText(CVector pt, int16_t align, int16_t valign, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time);
+	CSpriteText(float x, float y, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time);
+	CSpriteText(float x, float y, int16_t align, int16_t valign, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time);
 	~CSpriteText();
 
 protected:

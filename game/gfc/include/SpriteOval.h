@@ -14,6 +14,8 @@ jarek@kingston.ac.uk
 ****************************************************************************/
 #pragma once
 
+#include "Sprite.h"
+
 class EXT_DECL CSpriteOval : public CSprite
 {
 	CColor m_color;

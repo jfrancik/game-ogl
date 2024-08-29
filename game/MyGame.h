@@ -1,26 +1,14 @@
 #pragma once
 
-// NEW! Sprite definition (not-class) for use in OpenGL edition
-struct SPRITE
-{
-	// OpenGL texture id
-	unsigned idTexture = 0;
-
-	// 2D transforms
-	CVector translate, scale;
-	float rotate = 0.0f;
-};
-
 class CMyGame : public CGame
 {
-	// GLSL Program
-	unsigned m_idShaders;
-
-	// buffer id - can be shared by ALL sprites
-	unsigned m_idBuffer;
-
-	// rocket - has unique texture and transforms
-	SPRITE m_rocket;
+	// Define sprites and other instance variables here
+	//CSprite m_sprite;	// Sample sprite
+	CGraphics *m_pRocket, *m_pRocket2, *m_pBack;	// Sample images
+	std::list<CGraphics*> m_blobs;					// Even more sample images
+	std::list<CVector> m_blobPos;
+	
+	CVector m_pos = CVector(0, 0);
 
 public:
 	CMyGame(void);

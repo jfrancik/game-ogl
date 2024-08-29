@@ -83,7 +83,7 @@
     <LibraryPath>sdl/_x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>include;sdl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>include;sdl\include;sdl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>sdl/_x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -172,13 +172,18 @@
     <ClInclude Include="include\Graphics.h" />
     <ClInclude Include="include\Property.h" />
     <ClInclude Include="include\Rectangle.h" />
+    <ClInclude Include="include\Renderer.h" />
+    <ClInclude Include="include\RendererFactory.h" />
+    <ClInclude Include="include\RendererOGL.h" />
     <ClInclude Include="include\Sound.h" />
     <ClInclude Include="include\Sprite.h" />
     <ClInclude Include="include\SpriteContainer.h" />
     <ClInclude Include="include\SpriteOval.h" />
     <ClInclude Include="include\SpriteRect.h" />
     <ClInclude Include="include\SpriteText.h" />
+    <ClInclude Include="include\RendererSDL.h" />
     <ClInclude Include="include\Vector.h" />
+    <ClInclude Include="include\WindowsTools.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -192,12 +197,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="RendererFactory.cpp" />
+    <ClCompile Include="RendererOGL.cpp" />
     <ClCompile Include="SDL_collide.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteOval.cpp" />
     <ClCompile Include="SpriteRect.cpp" />
     <ClCompile Include="SpriteText.cpp" />
+    <ClCompile Include="RendererSDL.cpp" />
+    <ClCompile Include="WindowsTools.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

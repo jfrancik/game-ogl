@@ -19,6 +19,8 @@ jarek@kingston.ac.uk
 #include "Color.h"
 #include "Property.h"
 
+#include <map>
+
 class EXT_DECL CSprite
 {
 public:
@@ -38,31 +40,31 @@ public:
 
 	CSprite();
 
-	CSprite(CVector v, float w, float h, Uint32 time);
-	CSprite(CVector v, float w, float h, char *pFileBitmap, Uint32 time);
-	CSprite(CVector v, float w, float h, char *pFileBitmap, CColor colorKey, Uint32 time);
-	CSprite(CVector v, char *pFileBitmap, Uint32 time);
-	CSprite(CVector v, char *pFileBitmap, CColor colorKey, Uint32 time);
-	CSprite(CVector v, float w, float h, CGraphics *pGraphics, Uint32 time);
-	CSprite(CVector v, float w, float h, CGraphics *pGraphics, CColor colorKey, Uint32 time);
-	CSprite(CVector v, CGraphics *pGraphics, Uint32 time);
-	CSprite(CVector v, CGraphics *pGraphics, CColor colorKey, Uint32 time);
+	CSprite(CVector v, float w, float h, uint32_t time);
+	CSprite(CVector v, float w, float h, char *pFileBitmap, uint32_t time);
+	CSprite(CVector v, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time);
+	CSprite(CVector v, char *pFileBitmap, uint32_t time);
+	CSprite(CVector v, char *pFileBitmap, CColor colorKey, uint32_t time);
+	CSprite(CVector v, float w, float h, CGraphics *pGraphics, uint32_t time);
+	CSprite(CVector v, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time);
+	CSprite(CVector v, CGraphics *pGraphics, uint32_t time);
+	CSprite(CVector v, CGraphics *pGraphics, CColor colorKey, uint32_t time);
 
-	CSprite(float x, float y, float w, float h, Uint32 time);
-	CSprite(float x, float y, float w, float h, char *pFileBitmap, Uint32 time);
-	CSprite(float x, float y, float w, float h, char *pFileBitmap, CColor colorKey, Uint32 time);
-	CSprite(float x, float y, char *pFileBitmap, Uint32 time);
-	CSprite(float x, float y, char *pFileBitmap, CColor colorKey, Uint32 time);
-	CSprite(float x, float y, float w, float h, CGraphics *pGraphics, Uint32 time);
-	CSprite(float x, float y, float w, float h, CGraphics *pGraphics, CColor colorKey, Uint32 time);
-	CSprite(float x, float y, CGraphics *pGraphics, Uint32 time);
-	CSprite(float x, float y, CGraphics *pGraphics, CColor colorKey, Uint32 time);
+	CSprite(float x, float y, float w, float h, uint32_t time);
+	CSprite(float x, float y, float w, float h, char *pFileBitmap, uint32_t time);
+	CSprite(float x, float y, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time);
+	CSprite(float x, float y, char *pFileBitmap, uint32_t time);
+	CSprite(float x, float y, char *pFileBitmap, CColor colorKey, uint32_t time);
+	CSprite(float x, float y, float w, float h, CGraphics *pGraphics, uint32_t time);
+	CSprite(float x, float y, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time);
+	CSprite(float x, float y, CGraphics *pGraphics, uint32_t time);
+	CSprite(float x, float y, CGraphics *pGraphics, CColor colorKey, uint32_t time);
 
-	CSprite(CRectangle r, Uint32 time);
-	CSprite(CRectangle r, char *pFileBitmap, Uint32 time);
-	CSprite(CRectangle r, char *pFileBitmap, CColor colorKey, Uint32 time);
-	CSprite(CRectangle r, CGraphics *pGraphics, Uint32 time);
-	CSprite(CRectangle r, CGraphics *pGraphics, CColor colorKey, Uint32 time);
+	CSprite(CRectangle r, uint32_t time);
+	CSprite(CRectangle r, char *pFileBitmap, uint32_t time);
+	CSprite(CRectangle r, char *pFileBitmap, CColor colorKey, uint32_t time);
+	CSprite(CRectangle r, CGraphics *pGraphics, uint32_t time);
+	CSprite(CRectangle r, CGraphics *pGraphics, CColor colorKey, uint32_t time);
 
 	virtual ~CSprite();
 
@@ -70,7 +72,7 @@ public:
 	// Attributes
 
 private:
-	void _local_init(float x, float y, float w, float h, Uint32 time);		// constructor helper function
+	void _local_init(float x, float y, float w, float h, uint32_t time);		// constructor helper function
 
 	// Position & Size
 	CVector m_pos;			// position of the pivot point of the sprite 
@@ -84,10 +86,10 @@ private:
 	std::map<std::string, PROPERTY> m_properties;
 
 	// Time
-	Uint32 m_time;			// reference time
+	uint32_t m_time;		// reference time
 	
 	// Internal State (User-Defined)
-	Sint32 m_state;			// state (user defined)
+	int32_t m_state;		// state (user defined)
 	float m_health;			// additional state (health?)
 
 	// Animation Phases
@@ -115,7 +117,7 @@ private:
 	bool m_bDeleted;
 
 	// Death time
-	Uint32 m_timeDeath;		// if not ZERO - will be automatically deleted after that time
+	uint32_t m_timeDeath;	// if not ZERO - will be automatically deleted after that time
 
 	struct SHEET;
 
@@ -211,9 +213,9 @@ public:
 	// - Bounding Rectangle - the smallest rectangle to cover the whole area of the sprite in screen coordinates
 	// - NoRot Bounding Rectangle - as above, ignoring any Rotations
 
-	void GetClientRect(CRectangle &rect)		{ rect = CRectangle(0, 0, (Uint16)GetWidth(), (Uint16)GetHeight()); }
+	void GetClientRect(CRectangle &rect)		{ rect = CRectangle(0, 0, (int16_t)GetWidth(), (int16_t)GetHeight()); }
 	void GetBoundingRect(CRectangle &rect);
-	void GetNoRotBoundingRect(CRectangle &rect)	{ rect = CRectangle((Sint16)GetLeft(), (Sint16)GetBottom(), (Uint16)GetWidth(), (Uint16)GetHeight()); }
+	void GetNoRotBoundingRect(CRectangle &rect)	{ rect = CRectangle((int16_t)GetLeft(), (int16_t)GetBottom(), (int16_t)GetWidth(), (int16_t)GetHeight()); }
 
 	//////////////////////////////////////////
 	// Pivot Point
@@ -255,26 +257,26 @@ public:
 	void LoadImage(CGraphics *p, char *pAliasName)													{ SetProperty(pAliasName, &CGraphics(p)); }
 	void LoadImage(char *pFileName, char *pAliasName)												{ SetProperty(pAliasName, &CGraphics(pFileName)); }
 	void LoadImage(char *pFileName)																	{ LoadImage(pFileName, pFileName); }
-	void LoadImage(CGraphics *p, char *pAliasName, CColor colorKey)									{ SetProperty(pAliasName, &CGraphics(p, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, CColor colorKey)									{ SetProperty(pAliasName, &CGraphics(p, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, CColor colorKey)								{ SetProperty(pAliasName, &CGraphics(pFileName, colorKey)); }
 	void LoadImage(char *pFileName, CColor colorKey)												{ LoadImage(pFileName, pFileName, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex)										{ SetProperty(pAliasName, nIndex, &CGraphics(p)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex)									{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName)); }
 	void LoadImage(char *pFileName, int nIndex)														{ LoadImage(pFileName, pFileName, nIndex); }
-	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CColor colorKey)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CColor colorKey)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CColor colorKey)					{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, CColor colorKey)									{ LoadImage(pFileName, pFileName, nIndex, colorKey); }
 
 	void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect)									{ SetProperty(pAliasName, &CGraphics(p, rect)); }
 	void LoadImage(char *pFileName, char *pAliasName, CRectangle rect)								{ SetProperty(pAliasName, &CGraphics(pFileName, rect)); }
 	void LoadImage(char *pFileName, CRectangle rect)												{ LoadImage(pFileName, pFileName, rect); }
-	void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(pFileName, rect, colorKey)); }
 	void LoadImage(char *pFileName, CRectangle rect, CColor colorKey)								{ LoadImage(pFileName, pFileName, rect, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CRectangle rect)					{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, rect)); }
 	void LoadImage(char *pFileName, int nIndex, CRectangle rect)									{ LoadImage(pFileName, pFileName, nIndex, rect); }
-	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, rect, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, CRectangle rect, CColor colorKey)					{ LoadImage(pFileName, pFileName, nIndex, rect, colorKey); }
 
@@ -283,26 +285,26 @@ public:
 	void LoadImage(CGraphics *p, char *pAliasName, SHEET s)											{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, char *pAliasName, SHEET s)										{ SetProperty(pAliasName, &CGraphics(pFileName, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, SHEET s)														{ LoadImage(pFileName, pFileName, _DECODE_SHEET); }
-	void LoadImage(CGraphics *p, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(pFileName, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, SHEET s, CColor colorKey)										{ LoadImage(pFileName, pFileName, _DECODE_SHEET, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s)								{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, SHEET s)							{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, int nIndex, SHEET s)											{ LoadImage(pFileName, pFileName, nIndex, _DECODE_SHEET); }
-	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, SHEET s, CColor colorKey)							{ LoadImage(pFileName, pFileName, nIndex, _DECODE_SHEET, colorKey); }
 
 	void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow)									{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow)									{ SetProperty(pAliasName, &CGraphics(pFileName, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, short numCols, short numRows, short iCol, short iRow)													{ LoadImage(pFileName, pFileName, numCols, numRows, iCol, iRow); }
-	void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(pFileName, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)									{ LoadImage(pFileName, pFileName, numCols, numRows, iCol, iRow, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow)						{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, int nIndex, short numCols, short numRows, short iCol, short iRow)										{ LoadImage(pFileName, pFileName, nIndex, numCols, numRows, iCol, iRow); }
-	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)		{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
+	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)		{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)						{ LoadImage(pFileName, pFileName, nIndex, numCols, numRows, iCol, iRow, colorKey); }
 
@@ -313,7 +315,7 @@ public:
 	void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid);
 	void LoadAnimation(char *pFileName, char *pAliasName, SHEET grid);
 	void LoadAnimation(char *pFileName, SHEET grid) { LoadAnimation(pFileName, pFileName, grid); }
-	void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey);
+	//void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey);
 	void LoadAnimation(char *pFileName, char *pAliasName, SHEET grid, CColor colorKey);
 	void LoadAnimation(char *pFileName, SHEET grid, CColor colorKey) { LoadAnimation(pFileName, pFileName, grid, colorKey); }
 
@@ -321,28 +323,28 @@ public:
 	void AddImage(CGraphics *p, char *pAliasName)																			{ AddProperty(pAliasName, &CGraphics(p)); }
 	void AddImage(char *pFileName, char *pAliasName)																		{ AddProperty(pAliasName, &CGraphics(pFileName)); }
 	void AddImage(char *pFileName)																							{ AddImage(pFileName, pFileName); }
-	void AddImage(CGraphics *p, char *pAliasName, CColor colorKey)															{ AddProperty(pAliasName, &CGraphics(p, colorKey)); }
+	//void AddImage(CGraphics *p, char *pAliasName, CColor colorKey)															{ AddProperty(pAliasName, &CGraphics(p, colorKey)); }
 	void AddImage(char *pFileName, char *pAliasName, CColor colorKey)														{ AddProperty(pAliasName, &CGraphics(pFileName, colorKey)); }
 	void AddImage(char *pFileName, CColor colorKey)																			{ AddImage(pFileName, pFileName, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, CRectangle rect)															{ AddProperty(pAliasName, &CGraphics(p, rect)); }
 	void AddImage(char *pFileName, char *pAliasName, CRectangle rect)														{ AddProperty(pAliasName, &CGraphics(pFileName, rect)); }
 	void AddImage(char *pFileName, CRectangle rect)																			{ AddImage(pFileName, pFileName, rect); }
-	void AddImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)											{ AddProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
+	//void AddImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)											{ AddProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
 	void AddImage(char *pFileName, char *pAliasName, CRectangle rect, CColor colorKey)										{ AddProperty(pAliasName, &CGraphics(pFileName, rect, colorKey)); }
 	void AddImage(char *pFileName, CRectangle rect, CColor colorKey)														{ AddImage(pFileName, pFileName, rect, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow)						{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow); }
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow)					{ AddImage(pFileName, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow); }
 	void AddImage(char *pFileName, short numCols, short numRows, short iCol, short iRow)									{ AddImage(pFileName, pFileName, numCols, numRows, iCol, iRow); }
-	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
+	//void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(pFileName, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
 	void AddImage(char *pFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ AddImage(pFileName, pFileName, numCols, numRows, iCol, iRow, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true);
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true);
 	void AddImage(char *pFileName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true)						{ AddImage(pFileName, pFileName, numCols, numRows, iColFrom, iRowFrom, iColTo, iRowTo, bHorizontally); }
-	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
+	//void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
 	void AddImage(char *pFileName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true) { AddImage(pFileName, pFileName, numCols, numRows, iColFrom, iRowFrom, iColTo, iRowTo, colorKey, bHorizontally); }
 
@@ -377,7 +379,6 @@ public:
 
 	// Collision with another sprite - with pixel precision
 	// nSkip skips pixels between test, high values increase efficiency but decrease accuracy, 1 for maximum accuracy, 0 to switch pixel precision off
-	// Based on SDL_Collide by genjix & robloach (http://sdl-collide.sourceforge.net/)
 	virtual bool HitTest(CSprite *pSprite, int nSkip);
 	bool HitTest(CSprite *pSprite) { return HitTest(pSprite, 4); }
 
@@ -397,10 +398,10 @@ public:
 	// Requires OnUpdate cycles to work correctly.
 	// May be used, for example, to synchronise with death animation
 
-	void Die(Uint32 time)						{ m_timeDeath = m_time + time; }
+	void Die(uint32_t time)						{ m_timeDeath = m_time + time; }
 	void UnDie()								{ m_timeDeath = 0; }
 	bool IsDying()								{ return m_timeDeath != 0; }
-	Sint32 GetTimeToDie()						{ if (IsDying()) return (Sint32)m_timeDeath - (Sint32)m_time; else return MAXINT32; }
+	int32_t GetTimeToDie()						{ if (IsDying()) return (int32_t)m_timeDeath - (int32_t)m_time; else return 0x7fffffff; }
 	bool IsDead()								{ return IsDying() && GetTimeToDie() <= 0; }
 
 	/////////////////////////////////////////////////////////////////////
@@ -421,14 +422,14 @@ public:
 
 	//////////////////////////////////////////
 	// Time
-	void ResetTime(Uint32 time)					{ m_time = time; }
+	void ResetTime(uint32_t time)				{ m_time = time; }
 
 	//////////////////////////////////////////
 	// State (User-Defined Value)
-	Sint32 GetState()							{ return m_state; }
-	Sint32 GetStatus()							{ return m_state; }
-	void SetState(Sint32 state)					{ m_state = state; }
-	void SetStatus(Sint32 state)				{ m_state = state; }
+	int32_t GetState()							{ return m_state; }
+	int32_t GetStatus()							{ return m_state; }
+	void SetState(int32_t state)				{ m_state = state; }
+	void SetStatus(int32_t state)				{ m_state = state; }
 	float GetHealth()							{ return m_health; }
 	void SetHealth(float health)				{ m_health = health; }
 
@@ -476,7 +477,7 @@ public:
 	void Proceed(float pixels)					{ Move(m_v * pixels); }
 
 	// Proceed with the current velocity for an equivalent of time
-	void ProceedVelocity(Uint32 msecs)			{ Proceed(m_fv * msecs / 1000); }
+	void ProceedVelocity(uint32_t msecs)		{ Proceed(m_fv * msecs / 1000); }
 
 	//////////////////////////////////////////
 	// Simple Dynamics
@@ -504,14 +505,14 @@ public:
 	void SetOmega(float newOmega) 				{ m_omega = DEG2RAD(newOmega); }
 
 	// Proceed with the current rotational velocity for an equivalent of time
-	void ProceedOmega(Uint32 msecs)				{ Rotate(RAD2DEG(m_omega * msecs / 1000)); }
+	void ProceedOmega(uint32_t msecs)			{ Rotate(RAD2DEG(m_omega * msecs / 1000)); }
 	
 
 	/////////////////////////////////////////////////////////////////////
 	// Update & Draw
 
 	// Call this function from your application
-	void Update(Uint32 nGameTime);
+	void Update(uint32_t nGameTime);
 	void Draw(CGraphics *g);
 
 	// emulates drawing by preparing all internal structures, without the actual output
@@ -534,7 +535,7 @@ protected:
 
 	// default update uses velocity & omega to automatically move & rotate the sprite
 	// you will often want to override this function
-	virtual void OnUpdate(Uint32 time, Uint32 deltaTime);
+	virtual void OnUpdate(uint32_t time, uint32_t deltaTime);
 
 	// you will rarely need to override this
 	virtual void OnPrepareGraphics(CGraphics *pG = NULL);

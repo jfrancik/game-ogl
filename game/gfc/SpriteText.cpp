@@ -13,19 +13,18 @@ Created by Jarek Francik
 jarek@kingston.ac.uk
 ****************************************************************************/
 #include "pch.h"
-#include "GFC.h"
 #include "SpriteText.h"
 
-CSpriteText::CSpriteText(CVector pt, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time)
+CSpriteText::CSpriteText(CVector pt, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time)
 	: CSprite(pt, 0, 0, time), m_align(0), m_valign(0), m_strFont(strFont), m_nPtSize(nPtSize), m_text(text), m_color(color)
 	{ SetColorKey(CColor::AnyBut(color)); }
-CSpriteText::CSpriteText(CVector pt, Sint16 align, Sint16 valign, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time)
+CSpriteText::CSpriteText(CVector pt, int16_t align, int16_t valign, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time)
 	: CSprite(pt, 0, 0, time), m_align(align), m_valign(valign), m_strFont(strFont), m_nPtSize(nPtSize), m_text(text), m_color(color)
 	{ SetColorKey(CColor::AnyBut(color)); }
-CSpriteText::CSpriteText(float x, float y, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time)
+CSpriteText::CSpriteText(float x, float y, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time)
 	: CSprite(x, y, 0, 0, time), m_align(0), m_valign(0), m_strFont(strFont), m_nPtSize(nPtSize), m_text(text), m_color(color)
 	{ SetColorKey(CColor::AnyBut(color)); }
-CSpriteText::CSpriteText(float x, float y, Sint16 align, Sint16 valign, std::string strFont, Sint16 nPtSize, std::string text, CColor color, long time)
+CSpriteText::CSpriteText(float x, float y, int16_t align, int16_t valign, std::string strFont, int16_t nPtSize, std::string text, CColor color, long time)
 	: CSprite(x, y, 0, 0, time), m_align(align), m_valign(valign), m_strFont(strFont), m_nPtSize(nPtSize), m_text(text), m_color(color)
 	{ SetColorKey(CColor::AnyBut(color)); }
 

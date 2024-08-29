@@ -15,43 +15,32 @@ jarek@kingston.ac.uk
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
-#include <list>
-#include <map>
-#include <string>
-#include <functional>
-#include <iomanip>
-
-#include "Color.h"
 #include "Vector.h"
 #include "Rectangle.h"
-#include "FileMgr.h"
-//#include "Sprite.h"
 
+#include "Renderer.h"
+
+#include <iomanip>
+#include <functional>
 #pragma warning (disable:4251)
 
 // CGraphics class
 class EXT_DECL CGraphics
 {
 private:
-	SDL_Surface* m_pSurface;				// pointer to an SDL_Surface
-
+	IRenderer* m_pRenderer;					// renderer object associated
 	CVectorI m_vecScroll;					// scroll vector
 
-	// File Loader (path resolving and cached loading)
-	static CFileMgr<SDL_Surface> c_filemgr;
-
-	// Fonts...
-	struct FONT
-	{
-		TTF_Font *pFont;
-		int size, height, width, ascent, descent, leading, baseline;
-	};
-	FONT m_curFont;							// font set (if any)
-	std::string m_curFontFile;				// current font file
-	std::map<std::string, FONT> m_fonts;	// font cache
+	// Fonts information
+	int m_fontSize;
+	int m_fontHeight;
+	int m_fontWidth;
+	int m_fontAscent;
+	int m_fontDescent;
+	int m_fontLeading;
+	int m_fontBaseline;
 
 	// Text Printing
-	CColor m_textColor;						// text color
 	int m_x, m_y;							// current pos for printing
 	int m_ml, m_mr, m_mu, m_mb;				// margins: left, right, upper, bottom
 	std::stringstream m_ss;					// string stream used for the << operator (from ver. 1.7)
@@ -59,11 +48,15 @@ private:
 public:
 	// Constructors:
 
-	// from a SDL Surface
-	CGraphics(SDL_Surface* pSurface = NULL);
+	// from video mode initialisation
+	CGraphics(int width, int height, int depth, uint32_t flagsCreation);
+
+	// from a Renderer object (becomes an owner of the object)
+	CGraphics(IRenderer* pRenderer);
+
 	// memory canvas
-	CGraphics(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
-	CGraphics(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask, CColor colorKey);
+	CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
+	CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask, CColor colorKey);
 	// memory canvas compatible with the current display
 	CGraphics(int width, int height);
 	CGraphics(int width, int height, CColor colorKey);
@@ -76,34 +69,40 @@ public:
 
 	// copy from a pointer
 	CGraphics(CGraphics *p);
-	CGraphics(CGraphics *p, CColor colorKey);
+	// CGraphics(CGraphics *p, CColor colorKey); -- no more available, regular constructor copies the color key if set
 
 	// Rectangular Fragment
 	// Creates a CGraphics constructed of a rectangular fragment of another image.
 	CGraphics(CGraphics *p, CRectangle rect);
 	CGraphics(std::string sFileName, CRectangle rect);
-	CGraphics(CGraphics *p, CRectangle rect, CColor colorKey);
 	CGraphics(std::string sFileName, CRectangle rect, CColor colorKey);
-	
+	// CGraphics(CGraphics *p, CRectangle rect, CColor colorKey); -- no more available, regular constructor copies the color key if set
+
 	// Tiled Fragment
 	// Creates a CGraphics constructed of a rectangular fragment of another image.
 	// The image is considered to be divided into numCols x numRows regular rectangular tiles,
 	// of which the one is taken iCol's column and iRow's row
 	CGraphics(CGraphics *p, short numCols, short numRows, short iCol, short iRow);
 	CGraphics(std::string sFileName, short numCols, short numRows, short iCol, short iRow);
-	CGraphics(CGraphics *p, short numCols, short numRows, short iCol, short iRow, CColor colorKey);
 	CGraphics(std::string sFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey);
-	
+	// CGraphics(CGraphics* p, short numCols, short numRows, short iCol, short iRow, CColor colorKey); -- no more available, regular constructor copies the color key if set
+
 	// destructor
 	virtual ~CGraphics();
 
-	// SDL_Surface Getters & Setters
-	void SetSurface(SDL_Surface* pSurface)			{ m_pSurface = pSurface; }
-	SDL_Surface* GetSurface()						{ return m_pSurface; }
+	// rotozoom: create a clone object, rotated and zoomed
+	CGraphics* CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true);
+
+	// Renderer object Getters, Setters, and Testers
+	void SetRenderer(IRenderer* pRenderer)			{ if (m_pRenderer) delete m_pRenderer;  m_pRenderer = pRenderer; }
+	IRenderer* GetRenderer()						{ return m_pRenderer; }
+
+	// valid graphical surface?
+	bool HasPixels()								{ return m_pRenderer ? m_pRenderer->HasPixels() : false; }
 
 	// Width & Height
-	int GetWidth()									{ return m_pSurface->w; }
-	int GetHeight()									{ return m_pSurface->h; }
+	int GetWidth()									{ return m_pRenderer ? m_pRenderer->GetWidth() : 0; }
+	int GetHeight()									{ return m_pRenderer ? m_pRenderer->GetHeight() : 0; }
 
 	// Automatic Scroll Vector
 	CVectorI GetScrollPos()							{ return m_vecScroll; }
@@ -113,61 +112,70 @@ public:
 	void SetScrollPos()								{ m_vecScroll = CVectorI(0, 0); }
 	void ResetScrollPos()							{ m_vecScroll = CVectorI(0, 0); }
 
-	// Color functions
-	CColor MatchColor(CColor color);				// Match color with the closest
+	// Color functions - match color with the closest
+	CColor MatchColor(CColor color)					{ return m_pRenderer ? m_pRenderer->MatchColor(color) : color; }
 
 	// Color Key (Trasnparent Color)
-	bool SetColorKey(CColor& color);
-	bool IsColorKeySet();
-	CColor GetColorKey();
-	bool ClearColorKey();
+	void SetColorKey(CColor& color)					{ if (m_pRenderer) m_pRenderer->SetColorKey(color); }
+	bool IsColorKeySet()							{ return m_pRenderer ? m_pRenderer->IsColorKeySet() : false; }
+	CColor GetColorKey()							{ return m_pRenderer ? m_pRenderer->GetColorKey() : CColor::Black(); }
+	void ClearColorKey()							{ if (m_pRenderer) m_pRenderer->ClearColorKey(); }
+
+	// Pixel collision function
+	// Collision with another CGraphics object - with pixel precision
+	// nSkip skips pixels between test, high values increase efficiency but decrease accuracy, 1 for maximum accuracy, 0 to switch pixel precision off
+	// Based on SDL_Collide by genjix & robloach (http://sdl-collide.sourceforge.net/)
+	bool HitTest(int ax, int ay, CGraphics *pOther, int bx, int by, int nSkip = 4)
+	{
+		return m_pRenderer ? m_pRenderer->HitTest(ax, ay, pOther->GetRenderer(), bx, by, nSkip) : false;
+	}
+
 
 	// Flip Function
-	bool Flip();
+	void Flip()										{ if (m_pRenderer) m_pRenderer->Flip(); }
 
 	// lock and unlock (for direct pixel access)
-	bool Lock();
-	void Unlock();
+	bool Lock()										{ return m_pRenderer ? m_pRenderer->Lock() : false; }
+	void Unlock()									{ return m_pRenderer ? m_pRenderer->Unlock() : false; }
 
 
 	// Drawing Functions
 	CColor GetPixel(int x, int y);
 	void SetPixel(int x, int y, CColor& color);
 
-	bool Clear(CColor& clr);
-	bool Blit(CRectangle& rectDest, CGraphics& Src, CRectangle& rectSrc);
-	bool Blit(CRectangle& rectDest, CGraphics& Src);
-	bool Blit(CVectorI ptDest, CGraphics& Src, CRectangle& rectSrc);
-	bool Blit(CVectorI ptDest, CGraphics& Src);
+	void Clear(CColor& clr);
+	void Blit(CRectangle& rectDest, CGraphics& Src, CRectangle& rectSrc);
+	void Blit(CRectangle& rectDest, CGraphics& Src);
+	void Blit(CVectorI ptDest, CGraphics& Src, CRectangle& rectSrc);
+	void Blit(CVectorI ptDest, CGraphics& Src);
 
-	void DrawHLine(CVectorI pt1, Sint16 x2, CColor& color);
-	void DrawVLine(CVectorI pt1, Sint16 y2, CColor& color);
+	void DrawHLine(CVectorI pt1, int16_t x2, CColor& color);
+	void DrawVLine(CVectorI pt1, int16_t y2, CColor& color);
 	void DrawLine(CVectorI pt1, CVectorI pt2, CColor& color);
-	void DrawLine(CVectorI pt1, CVectorI pt2, Uint8 width, CColor& color);	// thick line
+	void DrawLine(CVectorI pt1, CVectorI pt2, uint8_t width, CColor& color);	// thick line
 	void DrawRect(CRectangle& rect, CColor& color);
-	bool FillRect(CRectangle& rect, CColor& color);
-	void DrawRect(CRectangle& rect, CColor& color, Sint16 rad);				// rounded rectangle
-	void FillRect(CRectangle& rect, CColor& color, Sint16 rad);				// rounded rectangle
+	void FillRect(CRectangle& rect, CColor& color);
+	void DrawRect(CRectangle& rect, CColor& color, int16_t rad);				// rounded rectangle
+	void FillRect(CRectangle& rect, CColor& color, int16_t rad);				// rounded rectangle
 	void DrawOval(CRectangle& rect, CColor& color);
 	void FillOval(CRectangle& rect, CColor& color);
-	void DrawCircle(CVectorI pt, Uint16 radius, CColor& color);
-	void FillCircle(CVectorI pt, Uint16 radius, CColor& color);
-	void DrawPie(CVectorI pt, Uint16 radius, Uint16 angleStart, Uint16 angleEnd, CColor& color);
-	void FillPie(CVectorI pt, Uint16 radius, Uint16 angleStart, Uint16 angleEnd, CColor& color);
+	void DrawCircle(CVectorI pt, uint16_t radius, CColor& color);
+	void FillCircle(CVectorI pt, uint16_t radius, CColor& color);
+	void DrawPie(CVectorI pt, uint16_t radius, uint16_t angleStart, uint16_t angleEnd, CColor& color);
+	void FillPie(CVectorI pt, uint16_t radius, uint16_t angleStart, uint16_t angleEnd, CColor& color);
 	void DrawTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& color);
 	void FillTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& color);
-	void DrawPolyLine(CVectorI pts[], Uint16 num, CColor& color);
-	void DrawPolygon(CVectorI pts[], Uint16 num, CColor& color);
-	void FillPolygon(CVectorI pts[], Uint16 num, CColor& color);
-	void DrawBezierLine(CVectorI pts[], Uint16 num, Uint16 nSteps, CColor& color);
+	void DrawPolyLine(CVectorI pts[], uint16_t num, CColor& color);
+	void DrawPolygon(CVectorI pts[], uint16_t num, CColor& color);
+	void FillPolygon(CVectorI pts[], uint16_t num, CColor& color);
+	void DrawBezierLine(CVectorI pts[], uint16_t num, uint16_t nSteps, CColor& color);
 
 	// Text Functions (low level)
 	int DrawText(CVectorI pos, std::string fontFace, int nPtSize, CColor color, std::string pText);
 	int DrawText(int x, int y, std::string fontFace, int nPtSize, CColor color, std::string pText)	{ return DrawText(CVectorI(x, y), fontFace, nPtSize, color, pText); }
 	
-	CGraphics *GetTextGraphics(TTF_Font *pFont, CColor color, std::string pText);
-	CGraphics *GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText);
-	CGraphics *GetTextGraphics(std::string pText);
+	CGraphics* GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText)	{ return m_pRenderer ? new CGraphics(m_pRenderer->GetTextGraphics(fontFace, nPtSize, color, pText)) : NULL; }
+	CGraphics *GetTextGraphics(std::string pText)													{ return m_pRenderer ? new CGraphics(m_pRenderer->GetTextGraphics(pText)) : NULL; }
 
 	// Text drawing functions
 	// Since version 1.7 operator << in conjunction with a set of manipulators is the only recommended method of drawing on-screen text
@@ -186,9 +194,10 @@ public:
 	std::ios_base::fmtflags GetTextFlags()						{ return m_ss.flags(); }
 	void SetTextFlags(std::ios_base::fmtflags fl)				{ m_ss.flags(fl); }
 
-	std::string GetFontName()									{ return m_curFontFile; }
-	int GetFontSize()											{ return m_curFont.size; }
-	CColor GetTextColor()										{ return m_textColor; }
+	std::string GetFontFace()									{ return m_pRenderer ? m_pRenderer->GetFontFace() : ""; }
+	std::string GetFontName()									{ return m_pRenderer ? m_pRenderer->GetFontFace() : ""; }
+	int GetFontSize()											{ return m_fontSize; }
+	CColor GetTextColor() { return m_pRenderer ? m_pRenderer->GetTextColor() : CColor::Black(); }
 
 	// Text Output Manipulators
 	// Mix them with other standard C++ stream manipulators and your text input to achieve the effect you like
@@ -234,21 +243,22 @@ public:
 	friend manip font(std::string s, int n);
 	friend manip leading(int n);
 	friend manip color(CColor clr);
-	friend manip color(Uint8 r, Uint8 g, Uint8 b, Uint8 a=255);
+	friend manip color(uint8_t r, uint8_t g, uint8_t b, uint8_t a=255);
 	friend manip margins(int l=5, int r=5, int u=2, int b=2);
 	friend std::string timetext(long t);
 
 	// change the default graphics file path (standard is "%;%images\\;.\\;images\\")
-	static void SetDefaultFilePath(std::string new_path)	{ c_filemgr.SetPathString(new_path); }
+//	static void SetDefaultFilePath(std::string new_path) { CRendererSDL::SetDefaultFilePath(new_path); }
+
 
 private:
 	// for internal use only
 
 	// Low level text drawing - public use is not recommended from version 1.7 - for internal use only
-	Sint16 DrawText(CVectorI pt, std::string pText);		// draws text adjusted to pt left side, right side or centrally, depending on the left/right/centre text flags; returns the right end of the text
-	Sint16 DrawTextLt(CVectorI pt, std::string pText);		// draws text adjusted to pt left side; returns the width of the text
-	Sint16 DrawTextCt(CVectorI pt, std::string pText);		// draws text adjusted centrally to pt; returns the half of the width of the text
-	Sint16 DrawTextRt(CVectorI pt, std::string pText);		// draws text adjusted to pt right side; returns 0
+	int16_t drawText(CVectorI pt, std::string pText);		// draws text adjusted to pt left side, right side or centrally, depending on the left/right/centre text flags; returns the right end of the text
+	int16_t drawTextLt(CVectorI pt, std::string pText);		// draws text adjusted to pt left side; returns the width of the text
+	int16_t drawTextCt(CVectorI pt, std::string pText);		// draws text adjusted centrally to pt; returns the half of the width of the text
+	int16_t drawTextRt(CVectorI pt, std::string pText);		// draws text adjusted to pt right side; returns 0
 	
 	CGraphics &_DrawText();
 	CGraphics &_DrawText(std::ostream&(*f)(std::ostream&));
@@ -256,13 +266,13 @@ private:
 
 	// Text Attributes Functions - public use is not recommended from version 1.7 - for internal use only
 	// Recommended replacement is provided in the comments below
-	FONT FindFont(std::string fontFace, int nPtSize = 0);		// helper for SetFont and GetTextGraphics(font, color, text)
-	void SetFont(std::string fontFace, int nPtSize = 0);		// *g << font(file, nPtSize); 
-	void SetFont(int nPtSize);									// *g << font(nPtSize);
-	void SetTextColor(CColor clr)				{ m_textColor = clr; }		// *g << color(clr);
-	void SetMargins(int l, int r, int u, int b)	{ m_ml = l; m_mr = r; m_mu = u; m_mb = b; GotoRowCol(0, 0); }	// *g << margins(l, r, u, b);
-	int  GetFontLeading()						{ return m_curFont.leading; }									// n/a
-	void SetFontLeading(int l)					{ m_curFont.leading = l; m_curFont.baseline = m_curFont.leading - m_curFont.height - m_curFont.descent; }	// *g << leading(l);
+	void cacheFontSize()							{ if (m_pRenderer) m_pRenderer->GetFontSize(m_fontSize, m_fontHeight, m_fontWidth, m_fontAscent, m_fontDescent, m_fontLeading, m_fontBaseline);  }
+	void SetFont(std::string fontFace, int nPtSize)	{ if (m_pRenderer) m_pRenderer->SetFont(fontFace, nPtSize); cacheFontSize(); }		// *g << font(file, nPtSize); 
+	void SetFont(int nPtSize)						{ if (m_pRenderer) m_pRenderer->SetFont(nPtSize); cacheFontSize(); }					// *g << font(nPtSize);
+	void SetTextColor(CColor clr)					{ if (m_pRenderer) m_pRenderer->SetTextColor(clr); }		// *g << color(clr);
+	void SetMargins(int l, int r, int u, int b)		{ m_ml = l; m_mr = r; m_mu = u; m_mb = b; GotoRowCol(0, 0); }		// *g << margins(l, r, u, b);
+	int  GetFontLeading()							{ return m_fontLeading; }	// n/a
+	void SetFontLeading(int l)						{ m_fontLeading = l; m_fontBaseline = m_fontLeading - m_fontHeight - m_fontDescent; }	// *g << leading(l);
 
 	// Text Insertion Point functions - public use is not recommended from version 1.7 - for internal use only
 	// Recommended replacement is provided in the comments below
@@ -272,19 +282,19 @@ private:
 	// In GotoRowCol, GotoRow and GotoCol the direction from which rows and cols are counted is determined automatically, 
 	// depending on the current manipulator settings (left/right/center/top/bottom/vcenter/up/down)
 	// GotoLn moves the IP one line down in top/down modes, or one line up in bottom/up modes. GotoLnUp/Dn moves the IP one line up and down, respectively
-	void GotoXY(int x, int y)			{ m_x = x; m_y = y; }														// *g << xy(x, y);
-	void GotoRowCol(float r, float c)	{ GotoRow(r); GotoCol(c); }													// *g << rowcol(r, c);
-	void GotoRow(float r = 0)			{ if (m_ss.flags() & std::ios::skipws) GotoRowTp(r); else GotoRowBt(r); }	// *g << row(r);
-	void GotoRowTp(float r = 0)			{ m_y = GetHeight() - m_mu - (int)((r + 1) * m_curFont.leading) + m_curFont.baseline; }			// *g << top << row(r);
-	void GotoRowBt(float r = 0)			{ m_y = m_mb + (int)(r * m_curFont.leading) - m_curFont.descent; }								// *g << bottom << row(r);
-	void GotoRowCt(float r = 0)			{ m_y = m_mb + (GetHeight() - m_mu - m_mb - m_curFont.leading) / 2 - (int)(r * m_curFont.leading); }	// *g << vcenter << row(r);
-	void GotoCol(float c = 0)			{ auto f = m_ss.flags() & std::ios::adjustfield; if (f == std::ios::left) GotoColLt(c); else if (f == std::ios::right) GotoColRt(c); else GotoColCt(c); }	// *g << col(c);
-	void GotoColLt(float c = 0)			{ m_x = m_ml + (int)(c * m_curFont.width);  }								// *g << left << col(c);
-	void GotoColRt(float c = 0)			{ m_x = GetWidth() - m_mr - (int)(c * m_curFont.width); }					// *g << right << col(c);
-	void GotoColCt(float c = 0)			{ m_x = m_ml + (GetWidth() - m_ml - m_mr) / 2 + (int)(c * m_curFont.width); }	// *g << center << col(c);
-	void GotoLn()						{ m_y -= m_curFont.leading * ((m_ss.flags() & std::ios::skipws) ? 1 : -1); GotoCol(); }// *g << endl;
-	void GotoLnDn()						{ m_y -= m_curFont.leading; GotoCol(); }										// *g << down << endl;
-	void GotoLnUp()						{ m_y += m_curFont.leading; GotoCol(); }										// *g << up << endl;
+	void GotoXY(int x, int y)							{ m_x = x; m_y = y; }															// *g << xy(x, y);
+	void GotoRowCol(float r, float c)					{ GotoRow(r); GotoCol(c); }														// *g << rowcol(r, c);
+	void GotoRow(float r = 0)							{ if (m_ss.flags() & std::ios::skipws) GotoRowTp(r); else GotoRowBt(r); }		// *g << row(r);
+	void GotoRowTp(float r = 0)							{ m_y = GetHeight() - m_mu - (int)((r + 1) * m_fontLeading) + m_fontBaseline; }	// *g << top << row(r);
+	void GotoRowBt(float r = 0)							{ m_y = m_mb + (int)(r * m_fontLeading) - m_fontDescent; }						// *g << bottom << row(r);
+	void GotoRowCt(float r = 0)							{ m_y = m_mb + (GetHeight() - m_mu - m_mb - m_fontLeading) / 2 - (int)(r * m_fontLeading); }	// *g << vcenter << row(r);
+	void GotoCol(float c = 0)							{ auto f = m_ss.flags() & std::ios::adjustfield; if (f == std::ios::left) GotoColLt(c); else if (f == std::ios::right) GotoColRt(c); else GotoColCt(c); }	// *g << col(c);
+	void GotoColLt(float c = 0)							{ m_x = m_ml + (int)(c * m_fontWidth);  }										// *g << left << col(c);
+	void GotoColRt(float c = 0)							{ m_x = GetWidth() - m_mr - (int)(c * m_fontWidth); }							// *g << right << col(c);
+	void GotoColCt(float c = 0)							{ m_x = m_ml + (GetWidth() - m_ml - m_mr) / 2 + (int)(c * m_fontWidth); }		// *g << center << col(c);
+	void GotoLn()										{ m_y -= m_fontLeading * ((m_ss.flags() & std::ios::skipws) ? 1 : -1); GotoCol(); }// *g << endl;
+	void GotoLnDn()										{ m_y -= m_fontLeading; GotoCol(); }											// *g << down << endl;
+	void GotoLnUp()										{ m_y += m_fontLeading; GotoCol(); }											// *g << up << endl;
 };
 
 
@@ -300,12 +310,12 @@ inline CGraphics::manip row(float n)					{ return [n]    (CGraphics& gr) -> CGra
 inline CGraphics::manip col(float n)					{ return [n]    (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.GotoCol(n); return gr; }; }
 inline CGraphics::manip rowcol(float r, float c)		{ return [r, c] (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.GotoRow(r); gr.GotoCol(c); return gr; }; }
 inline CGraphics::manip xy(int x, int y)				{ return [x, y] (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.GotoXY(x, y); return gr; }; }
-inline CGraphics::manip font(std::string s)				{ return [s]    (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetFont(s); return gr; }; }
+inline CGraphics::manip font(std::string s)				{ return [s]    (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetFont(s, 0); return gr; }; }
 inline CGraphics::manip font(int n)						{ return [n]    (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetFont(n); return gr; }; }
 inline CGraphics::manip font(std::string s, int n)		{ return [s, n] (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetFont(s, n); return gr; }; }
 inline CGraphics::manip leading(int n)					{ return [n]    (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetFontLeading(n); return gr; }; }
 inline CGraphics::manip color(CColor clr)				{ return [clr]  (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetTextColor(clr); return gr; }; }
-inline CGraphics::manip color(Uint8 r, Uint8 g, Uint8 b, Uint8 a){ return [r, g, b, a]  (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetTextColor(CColor(r, g, b, a)); return gr; }; }
+inline CGraphics::manip color(uint8_t r, uint8_t g, uint8_t b, uint8_t a){ return [r, g, b, a]  (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetTextColor(CColor(r, g, b, a)); return gr; }; }
 inline CGraphics::manip margins(int l, int r, int u, int b)	 { return [l, r, u, b]  (CGraphics& gr) -> CGraphics& { gr << std::flush; gr.SetMargins(l, r, u, b); return gr; }; }
 inline std::string timetext(long t)						{ std::stringstream s; s << std::setfill('0') << std::setw(2) << t/60000%100 << ":" << std::setw(2) << t/1000%60 << "." << std::setw(2) << t/10%100; return s.str(); }
 

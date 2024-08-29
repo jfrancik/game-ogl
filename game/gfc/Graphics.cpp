@@ -16,281 +16,197 @@ jarek@kingston.ac.uk
 #include "Graphics.h"
 #include "Rectangle.h"
 
+#include "RendererFactory.h"
+
 using namespace std;
-
-unsigned char NO_IMAGE[] = { 
-66,77,246,0,0,0,0,0,0,0,118,0,0,0,40,0,0,0,16,0,0,0,16,0,0,0,1,0,4,0,0,0,0,0,128,
-0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,16,0,0,0,0,0,0,0,0,0,128,0,0,128,0,0,0,128,128,0,
-128,0,0,0,128,0,128,0,128,128,0,0,192,192,192,0,128,128,128,0,0,0,255,0,0,255,0,
-0,0,255,255,0,255,0,0,0,255,0,255,0,255,255,0,0,255,255,255,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,153,153,153,153,153,153,0,0,159,249,153,153,159,249,0,0,159,255,
-153,153,255,249,0,0,153,255,249,159,255,153,0,0,153,159,255,255,249,153,0,0,153,
-153,255,255,153,153,0,0,153,153,255,255,153,153,0,0,153,159,255,255,249,153,0,0,
-153,255,249,159,255,153,0,0,159,255,153,153,255,249,0,0,159,249,153,153,159,249,
-0,0,153,153,153,153,153,153,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-
-
-CFileMgr<SDL_Surface> CGraphics::c_filemgr("%;%images\\;.\\;images\\",
-											[](string filename) 
-											{ 
-												return IMG_Load(filename.c_str()); 
-											},
-											[](SDL_Surface *pSurface) 
-											{ 
-												SDL_FreeSurface(pSurface); 
-											});
-
 
 /////////////////////////////////////////////////////////
 // constructor
 
-CGraphics::CGraphics(SDL_Surface* pSurface) 
+CGraphics::CGraphics(int width, int height, int depth, uint32_t flagsCreation)
 {
-	if (pSurface)
-		m_pSurface = pSurface;
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(width, height, depth, flagsCreation);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
-CGraphics::CGraphics(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask)
+
+// from a SDL Surface
+//CGraphics::CGraphics(void* pSurface)
+//{
+//	m_pRenderer = CRendererFactory::Instance().Create();
+//	m_pRenderer->CreateFromSurface(pSurface);
+//	m_ml = m_mr = 5; m_mu = m_mb = 2;
+//	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+//}
+
+// from a CSurface object
+CGraphics::CGraphics(IRenderer* pRenderer)
 {
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, depth, Rmask, Gmask, Bmask, Amask);
+	m_pRenderer = pRenderer;
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
-CGraphics::CGraphics(int width, int height, int depth, Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask, CColor colorKey)
+// memory canvas
+CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, depth, Rmask, Gmask, Bmask, Amask);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
+	m_ml = m_mr = 5; m_mu = m_mb = 2;
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+}
+
+CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask, CColor colorKey)
+{
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
 	SetColorKey(colorKey);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
-	static SDL_PixelFormat *_getVideoSurfaceFormat()
-	{
-		static SDL_PixelFormat stdformat = { NULL, 32, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0xff0000, 0xff00, 0xff, 0, 0, 0 };
-		SDL_Surface *pVideo = SDL_GetVideoSurface();
-		if (pVideo)
-			return pVideo->format;
-		else
-			return &stdformat;
-	}
-
-
+// memory canvas compatible with the current display
 CGraphics::CGraphics(int width, int height)
 {
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(width, height);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 CGraphics::CGraphics(int width, int height, CColor colorKey)
 {
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(width, height);
 	SetColorKey(colorKey);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
+// from a loaded bitmap
 CGraphics::CGraphics(string sFileName)
 {
-	SDL_Surface *pSurface = c_filemgr.Load(sFileName);
-	if (pSurface)
-	{
-		m_pSurface = SDL_ConvertSurface(pSurface, pSurface->format, pSurface->flags);
-		//if (m_pSurface->format->BitsPerPixel == 24)
-		//{
-		//	SDL_Surface *pBlit = SDL_CreateRGBSurface(SDL_SWSURFACE, m_pSurface->w, m_pSurface->h, 32, m_pSurface->format->Rmask, m_pSurface->format->Gmask, m_pSurface->format->Bmask, m_pSurface->format->Amask /*| 0xFF000000*/);
-		//	SDL_BlitSurface(m_pSurface, NULL, pBlit, NULL);
-		//	SDL_FreeSurface(m_pSurface);
-		//	m_pSurface = pBlit;
-		//}
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
-
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 CGraphics::CGraphics(string sFileName, CColor colorKey)
 {
-	SDL_Surface *pSurface = c_filemgr.Load(sFileName);
-	if (pSurface)
-	{
-		m_pSurface = SDL_ConvertSurface(pSurface, pSurface->format, pSurface->flags);
-		if (m_pSurface->format->BitsPerPixel == 24)
-		{
-			SDL_Surface *pBlit = SDL_CreateRGBSurface(SDL_SWSURFACE, m_pSurface->w, m_pSurface->h, 32, m_pSurface->format->Rmask, m_pSurface->format->Gmask, m_pSurface->format->Bmask, m_pSurface->format->Amask);
-			SDL_BlitSurface(m_pSurface, NULL, pBlit, NULL);
-			SDL_FreeSurface(m_pSurface);
-			m_pSurface = pBlit;
-		}
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
-
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName);
 	SetColorKey(colorKey);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
+// copy constructor
 CGraphics::CGraphics(CGraphics &g)
 {
-	m_pSurface = SDL_ConvertSurface(g.GetSurface(), g.GetSurface()->format, g.GetSurface()->flags);
-	
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(g.GetRenderer());
+
+	if (g.IsColorKeySet()) SetColorKey(g.GetColorKey());
+	m_ml = g.m_ml; m_mr = g.m_mr; m_mu = g.m_mu; m_mb = g.m_mb;
+	m_fontSize = g.m_fontSize; m_fontHeight = g.m_fontHeight; m_fontWidth = g.m_fontWidth; m_fontAscent = g.m_fontAscent; m_fontDescent = g.m_fontDescent; m_fontLeading = g.m_fontLeading; m_fontBaseline = g.m_fontBaseline;
 }
 
+// copy from a pointer
 CGraphics::CGraphics(CGraphics *pG)
 {
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL);
+
 	if (pG)
-		m_pSurface = SDL_ConvertSurface(pG->GetSurface(), pG->GetSurface()->format, pG->GetSurface()->flags);
+	{
+		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
+	}
 	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
-	
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	{
+		m_ml = m_mr = 5; m_mu = m_mb = 2;
+		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	}
 }
 
-CGraphics::CGraphics(CGraphics *pG, CColor colorKey)
+// Rectangular Fragment
+CGraphics::CGraphics(CGraphics *pG, CRectangle rect)
 {
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL, rect);
+
 	if (pG)
-		m_pSurface = SDL_ConvertSurface(pG->GetSurface(), pG->GetSurface()->format, pG->GetSurface()->flags);
+	{
+		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
+	}
 	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
-	
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
-}
-
-CGraphics::CGraphics(CGraphics *p, CRectangle rect)
-{
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, rect.w, rect.h, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-	SDL_BlitSurface(p->GetSurface(), &CRectangle(rect.x, rect.y, rect.w, rect.h).YInv(p->GetHeight()), GetSurface(), &CRectangle(0, 0, rect.w, rect.h).YInv(GetHeight()));
-
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	{
+		m_ml = m_mr = 5; m_mu = m_mb = 2;
+		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	}
 }
 
 CGraphics::CGraphics(string sFileName, CRectangle rect)
 {
-	SDL_Surface *pFileSurface = c_filemgr.Load(sFileName);
-	if (pFileSurface)
-	{
-		SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-		m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, rect.w, rect.h, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-		SDL_BlitSurface(pFileSurface, &CRectangle(rect.x, rect.y, rect.w, rect.h).YInv(pFileSurface->h), GetSurface(), &CRectangle(0, 0, rect.w, rect.h).YInv(GetHeight()));
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName, rect);
 
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
-}
-
-CGraphics::CGraphics(CGraphics *p, CRectangle rect, CColor colorKey)
-{
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, rect.w, rect.h, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-	SDL_BlitSurface(p->GetSurface(), &CRectangle(rect.x, rect.y, rect.w, rect.h).YInv(p->GetHeight()), GetSurface(), &CRectangle(0, 0, rect.w, rect.h).YInv(GetHeight()));
-
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 CGraphics::CGraphics(string sFileName, CRectangle rect, CColor colorKey)
 {
-	SDL_Surface *pFileSurface = c_filemgr.Load(sFileName);
-	if (pFileSurface)
-	{
-		SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-		m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, rect.w, rect.h, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-		SDL_BlitSurface(pFileSurface, &CRectangle(rect.x, rect.y, rect.w, rect.h).YInv(pFileSurface->h), GetSurface(), &CRectangle(0, 0, rect.w, rect.h).YInv(GetHeight()));
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName, rect);
 
 	SetColorKey(colorKey);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
-CGraphics::CGraphics(CGraphics *p, short numCols, short numRows, short iCol, short iRow)
+// Tiled Fragment
+CGraphics::CGraphics(CGraphics *pG, short numCols, short numRows, short iCol, short iRow)
 {
-	int width = p->GetWidth() / numCols;
-	int height = p->GetHeight() / numRows;
-
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-	SDL_BlitSurface(p->GetSurface(), &CRectangle(iCol * width, iRow * height, width, height).YInv(p->GetHeight()), GetSurface(), &CRectangle(0, 0, width, height).YInv(GetHeight()));
-
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL, numCols, numRows, iCol, iRow);
+	
+	if (pG)
+	{
+		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
+	}
+	else
+	{
+		m_ml = m_mr = 5; m_mu = m_mb = 2;
+		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	}
 }
 
 CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow)
 {
-	SDL_Surface *pFileSurface = c_filemgr.Load(sFileName);
-
-	if (pFileSurface)
-	{
-		int width = pFileSurface->w / numCols;
-		int height = pFileSurface->h / numRows;
-
-		SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-		m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-		SDL_BlitSurface(pFileSurface, &CRectangle(iCol * width, iRow * height, width, height).YInv(pFileSurface->h), GetSurface(), &CRectangle(0, 0, width, height).YInv(GetHeight()));
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
 
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
-}
-
-CGraphics::CGraphics(CGraphics *p, short numCols, short numRows, short iCol, short iRow, CColor colorKey)
-{
-	int width = p->GetWidth() / numCols;
-	int height = p->GetHeight() / numRows;
-
-	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-	SDL_BlitSurface(p->GetSurface(), &CRectangle(iCol * width, iRow * height, width, height).YInv(p->GetHeight()), GetSurface(), &CRectangle(0, 0, width, height).YInv(GetHeight()));
-
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)
 {
-	SDL_Surface *pFileSurface = c_filemgr.Load(sFileName);
-
-	if (pFileSurface)
-	{
-		int width = pFileSurface->w / numCols;
-		int height = pFileSurface->h / numRows;
-
-		SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
-		m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
-		SDL_BlitSurface(pFileSurface, &CRectangle(iCol * width, iRow * height, width, height).YInv(pFileSurface->h), GetSurface(), &CRectangle(0, 0, width, height).YInv(GetHeight()));
-	}
-	else
-		m_pSurface = SDL_LoadBMP_RW(SDL_RWFromMem(NO_IMAGE, sizeof(NO_IMAGE)), 1);
+	m_pRenderer = CRendererFactory::Instance().Create();
+	m_pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
 
 	SetColorKey(colorKey);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	memset(&m_curFont, 0, sizeof(m_curFont));
+	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 /////////////////////////////////////////////////////////
@@ -298,81 +214,19 @@ CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol,
 
 CGraphics::~CGraphics() 
 {
-	for (map<string, FONT>::iterator i = m_fonts.begin(); i != m_fonts.end(); i++)
-		TTF_CloseFont((*i).second.pFont);
-	if (GetSurface())
+	if (m_pRenderer)
 	{
-		SDL_FreeSurface(GetSurface());
-		m_pSurface = NULL;
+		delete m_pRenderer;
+		m_pRenderer = NULL;
 	}
 }
 
 /////////////////////////////////////////////////////////
-// Match color with the closest
-
-CColor CGraphics::MatchColor(CColor color) 
+// RotoZoom: create a clone object, rotated and zoomed
+CGraphics* CGraphics::CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth)
 {
-	//convert it to the pixel format
-	Uint32 col = SDL_MapRGBA(GetSurface()->format, color.R(), color.G(), color.B(), color.A());
-
-	//convert it from the pixel format
-	SDL_GetRGBA(col, GetSurface()->format, &color.R(), &color.G(), &color.B(), &color.A());
-
-	//return the matched color
-	return (color);
+	return m_pRenderer ? new CGraphics(m_pRenderer->CreateRotozoom(angle, zoomx, zoomy, smooth)) : NULL;
 }
-
-/////////////////////////////////////////////////////////
-// Color Key (Trasnparent Color)
-
-bool CGraphics::SetColorKey(CColor& color) 
-{
-	Uint32 col = SDL_MapRGBA(GetSurface()->format, color.R(), color.G(), color.B(), color.A());
-	return (SDL_SetColorKey(GetSurface(), SDL_SRCCOLORKEY, col) == 0);
-}
-
-bool CGraphics::IsColorKeySet()
-{
-	return (m_pSurface->flags & SDL_SRCCOLORKEY) != 0;
-}
-
-CColor CGraphics::GetColorKey() 
-{
-	Uint32 col = GetSurface()->format->colorkey;
-	CColor color;
-	SDL_GetRGBA(col, GetSurface()->format, &color.R(), &color.G(), &color.B(), &color.A());
-	return (color);
-}
-
-bool CGraphics::ClearColorKey() 
-{
-	return (SDL_SetColorKey(GetSurface(), 0, 0) == 0);
-}
-
-/////////////////////////////////////////////////////////
-// Flip Function
-
-bool CGraphics::Flip() 
-{
-	return (SDL_Flip(GetSurface()) == 0);
-}
-
-/////////////////////////////////////////////////////////
-// lock and unlock (for direct pixel access)
-
-bool CGraphics::Lock() 
-{
-	if (!SDL_MUSTLOCK(GetSurface()))
-		return true;
-	return (SDL_LockSurface(GetSurface()) == 0);
-}
-
-void CGraphics::Unlock() 
-{
-	if (SDL_MUSTLOCK(GetSurface())) 
-		SDL_UnlockSurface(GetSurface());
-}
-
 
 /////////////////////////////////////////////////////////
 // Drawing Functions
@@ -381,40 +235,17 @@ CColor CGraphics::GetPixel(int x, int y)
 {
 	x += GetScrollPos().m_x;
 	y += GetScrollPos().m_y;
-
-	Uint32 color = 0;
-	int position = (GetHeight() - y - 1) * GetSurface()->pitch + GetSurface()->format->BytesPerPixel * x;
-	char* buffer =(char*) GetSurface()->pixels;
-	buffer += position;
-	Lock();
-	memcpy(&color, buffer, GetSurface()->format->BytesPerPixel);
-	Unlock();
-	CColor col;
-	SDL_GetRGBA(color, GetSurface()->format, &col.R(), &col.G(), &col.B(), &col.A());
-	return (col);
+	return m_pRenderer ? m_pRenderer->GetPixel(x, y) : CColor::Black();
 }
 
 void CGraphics::SetPixel(int x, int y, CColor& color) 
 {
 	x += GetScrollPos().m_x;
 	y += GetScrollPos().m_y;
-
-	int position = (GetHeight() - y - 1) * GetSurface()->pitch + GetSurface()->format->BytesPerPixel * x;
-	char* buffer =(char*) GetSurface()->pixels;
-	buffer += position;
-	Uint32 col = SDL_MapRGBA(GetSurface()->format, color.R(), color.G(), color.B(), color.A());
-	Lock();
-	memcpy(buffer, &col, GetSurface()->format->BytesPerPixel);
-	Unlock();
+	if (m_pRenderer) m_pRenderer->SetPixel(x, y, color);
 }
 
-bool CGraphics::FillRect(CRectangle& rect, CColor& color) 
-{
-	Uint32 col = SDL_MapRGBA(GetSurface()->format, color.R(), color.G(), color.B(), color.A());
-	return (SDL_FillRect(GetSurface(), &(rect + CVector(GetScrollPos())).YInv(GetHeight()), col) == 0);
-}
-
-bool CGraphics::Clear(CColor& clr) 
+void CGraphics::Clear(CColor& clr) 
 {
 	ResetScrollPos();
 	m_ss.flags(ios::dec | ios::skipws | ios::left);
@@ -424,111 +255,117 @@ bool CGraphics::Clear(CColor& clr)
 
 	*this << margins() << font("arial.ttf", 18) << color(CColor::Black()) << top << left;
 
-	Uint32 col = SDL_MapRGBA(GetSurface()->format, clr.R(), clr.G(), clr.B(), clr.A());		// Using SDL_MapRGBA (rather than SDL_MapRGB) is new to version 2.6.
-	return (SDL_FillRect(GetSurface(), NULL, col) == 0);
+	if (m_pRenderer) m_pRenderer->Clear(clr);
 }
 
-bool CGraphics::Blit(CRectangle& rectDest, CGraphics& Src, CRectangle& rectSrc) 
+
+void CGraphics::Blit(CRectangle& rectDest, CGraphics& Src, CRectangle& rectSrc)
 {
-	return (SDL_BlitSurface(Src.GetSurface(), &rectSrc.YInv(Src.GetHeight()), GetSurface(), &(rectDest + CVector(GetScrollPos())).YInv(GetHeight())) == 0);
+	if (m_pRenderer && Src.GetRenderer()) m_pRenderer->Blit(rectDest + CVector(GetScrollPos()), *Src.GetRenderer(), rectSrc);
 }
 
-bool CGraphics::Blit(CRectangle& rectDest, CGraphics& Src)
+void CGraphics::Blit(CRectangle& rectDest, CGraphics& Src)
 {
-	return Blit(rectDest, Src, CRectangle(0, 0, Src.GetWidth(), Src.GetHeight()));
+	Blit(rectDest, Src, CRectangle(0, 0, Src.GetWidth(), Src.GetHeight()));
 }
 
-bool CGraphics::Blit(CVectorI ptDest, CGraphics& Src, CRectangle& rectSrc)
+void CGraphics::Blit(CVectorI ptDest, CGraphics& Src, CRectangle& rectSrc)
 {
 	CRectangle rect(ptDest.GetX(), ptDest.GetY(), rectSrc.w, rectSrc.h);
-	return Blit(rect, Src, rectSrc);
+	Blit(rect, Src, rectSrc);
 }
 
-bool CGraphics::Blit(CVectorI ptDest, CGraphics& Src)
+void CGraphics::Blit(CVectorI ptDest, CGraphics& Src)
 {
-	return Blit(CRectangle(ptDest.GetX(), ptDest.GetY(), Src.GetWidth(), Src.GetHeight()), Src, CRectangle(0, 0, Src.GetWidth(), Src.GetHeight()));
+	Blit(CRectangle(ptDest.GetX(), ptDest.GetY(), Src.GetWidth(), Src.GetHeight()), Src, CRectangle(0, 0, Src.GetWidth(), Src.GetHeight()));
 }
 
-void CGraphics::DrawHLine(CVectorI pt1, Sint16 x2, CColor& color)
+void CGraphics::DrawHLine(CVectorI pt1, int16_t x2, CColor& color)
 {
 	pt1 += GetScrollPos();
 	x2 += GetScrollPos().m_x;
-	hlineRGBA(GetSurface(), pt1.GetX(), x2, GetHeight() - pt1.GetY() - 1, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawHLine(pt1, x2, color);
 }
 
-void CGraphics::DrawVLine(CVectorI pt1, Sint16 y2, CColor& color)
+void CGraphics::DrawVLine(CVectorI pt1, int16_t y2, CColor& color)
 {
 	pt1 += GetScrollPos();
 	y2 += GetScrollPos().m_y;
-	vlineRGBA(GetSurface(), pt1.GetX(), GetHeight() - pt1.GetY() - 1, GetHeight() - y2 - 1, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawVLine(pt1, y2, color);
 }
 
 void CGraphics::DrawLine(CVectorI pt1, CVectorI pt2, CColor& color)
 {
 	pt1 += GetScrollPos();
 	pt2 += GetScrollPos();
-	lineRGBA(GetSurface(), pt1.GetX(), GetHeight() - pt1.GetY() - 1, pt2.GetX(), GetHeight() - pt2.GetY() - 1, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawLine(pt1, pt2, color);
 }
 
-void CGraphics::DrawLine(CVectorI pt1, CVectorI pt2, Uint8 width, CColor& color)
+void CGraphics::DrawLine(CVectorI pt1, CVectorI pt2, uint8_t width, CColor& color)
 {
 	pt1 += GetScrollPos();
 	pt2 += GetScrollPos();
-	thickLineRGBA(GetSurface(), pt1.GetX(), GetHeight() - pt1.GetY() - 1, pt2.GetX(), GetHeight() - pt2.GetY() - 1, width, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawLine(pt1, pt2, width, color);
 }
 
 void CGraphics::DrawRect(CRectangle& rect, CColor& color)
 {
 	CRectangle R = rect + (CVector)GetScrollPos();
-	rectangleRGBA(GetSurface(), R.Left(), GetHeight() - R.Top(), R.Right(), GetHeight() - R.Bottom(), color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawRect(R, color);
 }
 
-void CGraphics::DrawRect(CRectangle& rect, CColor& color, Sint16 rad)
+void CGraphics::FillRect(CRectangle& rect, CColor& color)
 {
 	CRectangle R = rect + (CVector)GetScrollPos();
-	roundedRectangleRGBA(GetSurface(), R.Left(), GetHeight() - R.Top(), R.Right(), GetHeight() - R.Bottom(), rad, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->FillRect(R, color);
 }
 
-void CGraphics::FillRect(CRectangle& rect, CColor& color, Sint16 rad)
+void CGraphics::DrawRect(CRectangle& rect, CColor& color, int16_t rad)
 {
 	CRectangle R = rect + (CVector)GetScrollPos();
-	roundedBoxRGBA(GetSurface(), R.Left(), GetHeight() - R.Top(), R.Right(), GetHeight() - R.Bottom(), rad, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawRect(R, color, rad);
+}
+
+void CGraphics::FillRect(CRectangle& rect, CColor& color, int16_t rad)
+{
+	CRectangle R = rect + (CVector)GetScrollPos();
+	if (m_pRenderer) m_pRenderer->FillRect(R, color, rad);
 }
 
 void CGraphics::DrawOval(CRectangle& rect, CColor& color)
 {
 	CRectangle R = rect + (CVector)GetScrollPos();
-	ellipseRGBA(GetSurface(), R.GetCenterX(), GetHeight() - R.GetCenterY(), R.w/2, R.h/2, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawOval(R, color);
 }
 
 void CGraphics::FillOval(CRectangle& rect, CColor& color)
 {
 	CRectangle R = rect + (CVector)GetScrollPos();
-	filledEllipseRGBA(GetSurface(), R.GetCenterX(), GetHeight() - R.GetCenterY(), R.w/2, rect.h/2, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->FillOval(R, color);
 }
 
-void CGraphics::DrawCircle(CVectorI pt, Uint16 radius, CColor& color)
+void CGraphics::DrawCircle(CVectorI pt, uint16_t radius, CColor& color)
 {
 	pt += GetScrollPos();
-	circleRGBA(GetSurface(), pt.GetX(), GetHeight() - pt.GetY(), radius, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawCircle(pt, radius, color);
 }
 
-void CGraphics::FillCircle(CVectorI pt, Uint16 radius, CColor& color)
+void CGraphics::FillCircle(CVectorI pt, uint16_t radius, CColor& color)
 {
 	pt += GetScrollPos();
-	filledCircleRGBA(GetSurface(), pt.GetX(), GetHeight() - pt.GetY(), radius, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->FillCircle(pt, radius, color);
 }
 
-void CGraphics::DrawPie(CVectorI pt, Uint16 radius, Uint16 angleStart, Uint16 angleEnd, CColor& color)
+void CGraphics::DrawPie(CVectorI pt, uint16_t radius, uint16_t angleStart, uint16_t angleEnd, CColor& color)
 {
 	pt += GetScrollPos();
-	pieRGBA(GetSurface(), pt.GetX(), GetHeight() - pt.GetY(), radius, angleStart-90, angleEnd-90, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawPie(pt, radius, angleStart, angleEnd, color);
 }
 
-void CGraphics::FillPie(CVectorI pt, Uint16 radius, Uint16 angleStart, Uint16 angleEnd, CColor& color)
+void CGraphics::FillPie(CVectorI pt, uint16_t radius, uint16_t angleStart, uint16_t angleEnd, CColor& color)
 {
 	pt += GetScrollPos();
-	filledPieRGBA(GetSurface(), pt.GetX(), GetHeight() - pt.GetY(), radius, angleStart-90, angleEnd-90, color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->FillPie(pt, radius, angleStart, angleEnd, color);
 }
 
 void CGraphics::DrawTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& color)
@@ -536,7 +373,7 @@ void CGraphics::DrawTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& c
 	pt1 += GetScrollPos();
 	pt2 += GetScrollPos();
 	pt3 += GetScrollPos();
-	trigonRGBA(GetSurface(), pt1.GetX(), GetHeight() - pt1.GetY(), pt2.GetX(), GetHeight() - pt2.GetY(), pt3.GetX(), GetHeight() - pt3.GetY(), color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->DrawTriangle(pt1, pt2, pt3, color);
 }
 
 void CGraphics::FillTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& color)
@@ -544,59 +381,44 @@ void CGraphics::FillTriangle(CVectorI pt1, CVectorI pt2, CVectorI pt3, CColor& c
 	pt1 += GetScrollPos();
 	pt2 += GetScrollPos();
 	pt3 += GetScrollPos();
-	filledTrigonRGBA(GetSurface(), pt1.GetX(), GetHeight() - pt1.GetY(), pt2.GetX(), GetHeight() - pt2.GetY(), pt3.GetX(), GetHeight() - pt3.GetY(), color.GetR(), color.GetG(), color.GetB(), color.GetA());
+	if (m_pRenderer) m_pRenderer->FillTriangle(pt1, pt2, pt3, color);
 }
 
-void CGraphics::DrawPolyLine(CVectorI pts[], Uint16 num, CColor& color)
+void CGraphics::DrawPolyLine(CVectorI pts[], uint16_t num, CColor& color)
 {
 	if (num >= 2)
 		for (int i = 0; i < num-1; i++)
 			DrawLine(pts[i], pts[i+1], color);
 }
 
-void CGraphics::DrawPolygon(CVectorI pts[], Uint16 num, CColor& color)
+void CGraphics::DrawPolygon(CVectorI pts[], uint16_t num, CColor& color)
 {
-	Sint16 *xs = new Sint16[num];
-	Sint16 *ys = new Sint16[num];
+	if (!m_pRenderer) return;
+	CVectorI *spts = new CVectorI[num];
 	for (int i = 0; i < num; i++)
-	{
-		CVectorI pt = pts[i] + GetScrollPos();
-		xs[i] = pt.GetX(); 
-		ys[i] = GetHeight() - pt.GetY(); 
-	}
-	polygonRGBA(GetSurface(), xs, ys, num, color.GetR(), color.GetG(), color.GetB(), color.GetA());
-	delete [] xs;
-	delete [] ys;
+		spts[i] = pts[i] + GetScrollPos();
+	m_pRenderer->DrawPolyLine(spts, num, color);
+	delete[] spts;
 }
 
-void CGraphics::FillPolygon(CVectorI pts[], Uint16 num, CColor& color)
+void CGraphics::FillPolygon(CVectorI pts[], uint16_t num, CColor& color)
 {
-	Sint16 *xs = new Sint16[num];
-	Sint16 *ys = new Sint16[num];
+	if (!m_pRenderer) return;
+	CVectorI* spts = new CVectorI[num];
 	for (int i = 0; i < num; i++)
-	{
-		CVectorI pt = pts[i] + GetScrollPos();
-		xs[i] = pt.GetX();
-		ys[i] = GetHeight() - pt.GetY(); 
-	}
-	filledPolygonRGBA(GetSurface(), xs, ys, num, color.GetR(), color.GetG(), color.GetB(), color.GetA());
-	delete [] xs;
-	delete [] ys;
+		spts[i] = pts[i] + GetScrollPos();
+	m_pRenderer->FillPolygon(spts, num, color);
+	delete[] spts;
 }
 
-void CGraphics::DrawBezierLine(CVectorI pts[], Uint16 num, Uint16 nSteps, CColor& color)
+void CGraphics::DrawBezierLine(CVectorI pts[], uint16_t num, uint16_t nSteps, CColor& color)
 {
-	Sint16 *xs = new Sint16[num];
-	Sint16 *ys = new Sint16[num];
+	if (!m_pRenderer) return;
+	CVectorI* spts = new CVectorI[num];
 	for (int i = 0; i < num; i++)
-	{
-		CVectorI pt = pts[i] + GetScrollPos();
-		xs[i] = pt.GetX();
-		ys[i] = GetHeight() - pt.GetY(); 
-	}
-	bezierRGBA(GetSurface(), xs, ys, num, nSteps, color.GetR(), color.GetG(), color.GetB(), color.GetA());
-	delete [] xs;
-	delete [] ys;
+		spts[i] = pts[i] + GetScrollPos();
+	m_pRenderer->DrawBezierLine(spts, num, nSteps, color);
+	delete[] spts;
 }
 
 /////////////////////////////////////////////////////////
@@ -607,103 +429,65 @@ int CGraphics::DrawText(CVectorI pt, std::string fontFace, int nPtSize, CColor c
 	CGraphics *pG;
 	if ((pG = GetTextGraphics(fontFace, nPtSize, color, pText)) && pText.length())
 	{
-		Sint16 w = pG->GetWidth();
-		Blit(pt + CVectorI(0, m_curFont.descent), *pG);
+		int16_t w = pG->GetWidth();
+		Blit(pt + CVectorI(0, m_fontDescent), *pG);
 		delete pG;
 		return w;
 	}
 	return pG == NULL ? -1 : 0;
 }
 
-CGraphics *CGraphics::GetTextGraphics(TTF_Font *pFont, CColor textColor, string pText)
+void CGraphics::Flush()
 {
-	if (!pFont) return NULL;
-	return new CGraphics(TTF_RenderText_Blended(pFont, pText.c_str(), textColor));
-}
+	if (m_ss.eof()) return;
 
-CGraphics *CGraphics::GetTextGraphics(string fontFace, int nPtSize, CColor color, string pText)
-{
-	return GetTextGraphics(FindFont(fontFace, nPtSize).pFont, color, pText);
-}
+	string str;
 
-CGraphics *CGraphics::GetTextGraphics(string pText)
-{
-	if (!m_curFont.pFont)
-		SetFont(0);
-	return GetTextGraphics(m_curFont.pFont, m_textColor, pText);
-}
-
-#pragma warning (disable:4996)
-CGraphics::FONT CGraphics::FindFont(string fontFace, int nPtSize)
-{
-	if (nPtSize == 0) nPtSize = m_curFont.size;
-	if (nPtSize == 0) nPtSize = 18;
-
-	stringstream s;
-	s << fontFace << "." << nPtSize;
-	string label = s.str();
-
-	FONT font;
-	if (m_fonts.find(label) != m_fonts.end())
-		font = m_fonts[label];
-	else
+	getline(m_ss, str);
+	m_x += drawText(CVectorI(m_x, m_y), str);
+	while (!m_ss.eof())
 	{
-		font.pFont = TTF_OpenFont(c_filemgr.FindPathStr(fontFace).c_str(), nPtSize);
-		font.size = nPtSize;
-		font.height = TTF_FontHeight(font.pFont);
-		font.width = font.height;
-		font.ascent = TTF_FontAscent(font.pFont);
-		font.descent = TTF_FontDescent(font.pFont);
-		font.leading = max(TTF_FontLineSkip(font.pFont), font.height);
-		font.baseline = font.leading - font.height - font.descent;
-		m_fonts[label] = font;
+		GotoLn();
+		getline(m_ss, str);
+		m_x += drawText(CVectorI(m_x, m_y), str);
 	}
-	return font;
+	m_ss.clear();
+	m_ss.str("");
 }
 
-void CGraphics::SetFont(string fontFace, int nPtSize)
-{
-	m_curFont = FindFont(fontFace, nPtSize);
-	m_curFontFile = fontFace;
-}
+/////////////////////////////////////////////////////////
+// Private Text Drawing Functions
 
-void CGraphics::SetFont(int nPtSize)
-{
-	if (m_curFontFile.empty())
-		m_curFontFile = "arial.ttf";
-	SetFont(m_curFontFile, nPtSize);
-}
-
-Sint16 CGraphics::DrawText(CVectorI pt, string pText)
+int16_t CGraphics::drawText(CVectorI pt, string pText)
 {
 	ios::fmtflags fl = m_ss.flags() & ios::adjustfield;
 	if (fl == ios::left)
-		return DrawTextLt(pt, pText);
+		return drawTextLt(pt, pText);
 	else if (fl == ios::right)
-		return DrawTextRt(pt, pText);
+		return drawTextRt(pt, pText);
 	else
-		return DrawTextCt(pt, pText);
+		return drawTextCt(pt, pText);
 }
 
-Sint16 CGraphics::DrawTextLt(CVectorI pt, string pText)
+int16_t CGraphics::drawTextLt(CVectorI pt, string pText)
 {
 	CGraphics *pG;
 	if (pText.length() && (pG = GetTextGraphics(pText)))
 	{
-		Sint16 w = pG->GetWidth();
-		Blit(pt + CVectorI(0, m_curFont.descent), *pG);
+		int16_t w = pG->GetWidth();
+		Blit(pt + CVectorI(0, m_fontDescent), *pG);
 		delete pG;
 		return w;
 	}
 	return 0;
 }
 
-Sint16 CGraphics::DrawTextCt(CVectorI pt, string pText)
+int16_t CGraphics::drawTextCt(CVectorI pt, string pText)
 {
 	CGraphics *pG;
 	if (pText.length() && (pG = GetTextGraphics(pText)))
 	{
-		Sint16 w = pG->GetWidth() / 2;
+		int16_t w = pG->GetWidth() / 2;
 		pt.X() -= w;
 		Blit(pt, *pG);
 		delete pG;
@@ -712,7 +496,7 @@ Sint16 CGraphics::DrawTextCt(CVectorI pt, string pText)
 	return 0;
 }
 
-Sint16 CGraphics::DrawTextRt(CVectorI pt, string pText)
+int16_t CGraphics::drawTextRt(CVectorI pt, string pText)
 {
 	CGraphics *pG;
 	if (pText.length() && (pG = GetTextGraphics(pText)))
@@ -724,23 +508,7 @@ Sint16 CGraphics::DrawTextRt(CVectorI pt, string pText)
 	return 0;
 }
 
-void CGraphics::Flush()
-{
-	if (m_ss.eof()) return;
 
-	string str;
-
-	getline(m_ss, str);
-	m_x += DrawText(CVectorI(m_x, m_y), str);
-	while (!m_ss.eof())
-	{
-		GotoLn(); 
-		getline(m_ss, str);
-		m_x += DrawText(CVectorI(m_x, m_y), str);
-	}
-	m_ss.clear();
-	m_ss.str("");
-}
 
 CGraphics &CGraphics::_DrawText()
 {
@@ -756,7 +524,7 @@ CGraphics &CGraphics::_DrawText()
 		if (str.find('\n') == string::npos) return *this;	// no eol
 
 		getline(m_ss, str);
-		m_x += DrawText(CVectorI(m_x, m_y), str);
+		m_x += drawText(CVectorI(m_x, m_y), str);
 		while (!m_ss.eof())
 		{
 			GotoLn(); 
@@ -770,7 +538,7 @@ CGraphics &CGraphics::_DrawText()
 				return *this;
 			}
 			else
-				m_x += DrawText(CVectorI(m_x, m_y), str);
+				m_x += drawText(CVectorI(m_x, m_y), str);
 		}
 		m_ss.clear();
 		m_ss.str("");

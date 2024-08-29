@@ -18,14 +18,10 @@ jarek@kingston.ac.uk
 #include <string>
 #include <map>
 #include <fstream>
+#include <functional>
+#pragma warning (disable:4251)
 
-// WARNING: This part depends on Windows API
-// Potential porting problem
-#undef INADDR_ANY
-#undef INADDR_LOOPBACK
-#undef INADDR_BROADCAST
-#undef INADDR_NONE
-#include <windows.h>
+#include "WindowsTools.h"
 
 
 // Smart file loader, implements:
@@ -44,7 +40,8 @@ class CFileMgr
 	std::map<std::string, T*> m_cache;
 
 	// Handlers
-	std::function<T*(std::string filename)> m_loadHandler;
+	std::function<T* (std::string filename)> m_loadHandler;
+	std::function<T* (std::string filename, int nSize)> m_loadWithSizeHandler;
 	std::function<void (T*)> m_deleteHandler;
 
 public:
@@ -52,6 +49,15 @@ public:
 	{ 
 		SetPathString(path);
 		m_loadHandler = loadHandler;
+		m_loadWithSizeHandler = nullptr;
+		m_deleteHandler = deleteHandler;
+	}
+
+	CFileMgr(std::string path, std::function<T* (std::string filename, int nSize)> loadWithSizeHandler, std::function<void(T*)> deleteHandler)
+	{
+		SetPathString(path);
+		m_loadHandler = nullptr;
+		m_loadWithSizeHandler = loadWithSizeHandler;
 		m_deleteHandler = deleteHandler;
 	}
 
@@ -67,19 +73,8 @@ public:
 	{ 
 		path = respath = new_path; 
 
-		// THIS IS WINDOWS-SPECIFIC CALL!
-		// There is no portable possibility to determine the executable path
-		// main argc/argv values arrive too late - this function is typically called
-		// from within constructors of static objects!
-		char mfn[256];
-		GetModuleFileNameA(0, mfn, 256);
-
-		char drive[_MAX_DRIVE];
-		char dir[_MAX_PATH];
-		char fname[_MAX_FNAME];
-		char ext[_MAX_EXT];	
-		_splitpath_s(mfn, drive, sizeof(drive), dir, sizeof(dir), fname, sizeof(fname), ext, sizeof(ext));
-		std::string baseDir = std::string(drive) + std::string(dir);
+		// Executable file pathname:
+		std::string baseDir = GetBasePath();
 	
 		respath = path;
 		if (respath[respath.size() - 1] != ';')
@@ -124,10 +119,20 @@ public:
 	T *Load(std::string filename)
 	{
 		auto i = m_cache.find(filename);
-		if (i == m_cache.end())
+		if (i == m_cache.end() && m_loadHandler)
 			m_cache[filename] = m_loadHandler(FindPathStr(filename));
 
 		return m_cache[filename];
+	}
+
+	T* Load(std::string filename, int nSize)
+	{
+		std::string label = filename + "." + std::to_string(nSize);
+		auto i = m_cache.find(label);
+		if (i == m_cache.end() && m_loadWithSizeHandler)
+			m_cache[label] = m_loadWithSizeHandler(FindPathStr(filename), nSize);
+
+		return m_cache[label];
 	}
 };
 

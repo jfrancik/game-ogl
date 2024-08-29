@@ -14,7 +14,7 @@ jarek@kingston.ac.uk
 ****************************************************************************/
 #include "pch.h"
 #include <map>
-#include "GFC.h"
+#include "Sound.h"
 
 int CSoundPlayer::c_frequency = 44100;
 Uint16 CSoundPlayer::c_format = AUDIO_S16SYS;

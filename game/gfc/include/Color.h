@@ -17,44 +17,38 @@ jarek@kingston.ac.uk
 #ifndef __COLOR_H__
 #define __COLOR_H__
 
-#include "SDL_video.h"
-
 class EXT_DECL CColor  
 {
-private:
+public:
 	//actual color representation
-	SDL_Color m_Color;
+	uint8_t r, g, b, a;
 public:
 	// Constructors
-	CColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a=255)	{ Set(r, g, b, a); }
-	CColor(const CColor &Color)			{ m_Color.r = Color.GetR(); m_Color.g = Color.GetG(); m_Color.b = Color.GetB(); m_Color.unused = Color.GetA(); }
+	CColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a=255)	{ Set(r, g, b, a); }
+	CColor(const CColor &Color)			{ r = Color.GetR(); g = Color.GetG(); b = Color.GetB(); a = Color.GetA(); }
 	CColor()							{ Set(0, 0, 0, 255); }
 
 	// Destructor
 	virtual ~CColor()					{ }
 
 	// Access R, G, B
-	Uint8 GetR() const					{ return m_Color.r; }
-	Uint8 GetG() const					{ return m_Color.g; }
-	Uint8 GetB() const					{ return m_Color.b; }
-	Uint8 GetA() const					{ return m_Color.unused; }
+	uint8_t GetR() const				{ return r; }
+	uint8_t GetG() const				{ return g; }
+	uint8_t GetB() const				{ return b; }
+	uint8_t GetA() const				{ return a; }
 
-	void SetR(Uint8 r)					{ m_Color.r = r; }
-	void SetG(Uint8 g)					{ m_Color.g = g; }
-	void SetB(Uint8 b)					{ m_Color.b = b; }
-	void SetA(Uint8 a)					{ m_Color.unused = a; }
+	void SetR(uint8_t r)				{ this->r = r; }
+	void SetG(uint8_t g)				{ this->g = g; }
+	void SetB(uint8_t b)				{ this->b = b; }
+	void SetA(uint8_t a)				{ this->a = a; }
 	
-	void Set(Uint8 r, Uint8 g, Uint8 b, Uint8 a=0)	{ m_Color.r = r; m_Color.g = g; m_Color.b = b; m_Color.unused = a; }
-	void Set(CColor &color)				{ m_Color.r = color.R(); m_Color.g = color.G(); m_Color.b = color.B(); m_Color.unused = color.A(); }
+	void Set(uint8_t r, uint8_t g, uint8_t b, uint8_t a=0)	{ this->r = r; this->g = g; this->b = b; this->a = a; }
+	void Set(CColor &color)				{ r = color.R(); g = color.G(); b = color.B(); a = color.A(); }
 
-	Uint8 &R()							{ return m_Color.r; }
-	Uint8 &G()							{ return m_Color.g; }
-	Uint8 &B()							{ return m_Color.b; }
-	Uint8 &A()							{ return m_Color.unused; }
-
-	// Conversion Operators
-	operator SDL_Color()				{ return m_Color; }
-	operator SDL_Color*()				{ return &m_Color; }
+	uint8_t&R()							{ return r; }
+	uint8_t&G()							{ return g; }
+	uint8_t&B()							{ return b; }
+	uint8_t&A()							{ return a; }
 
 	// Assignment operators
 	CColor &operator=(CColor &Color)	{ Set(Color); return *this; }
@@ -83,36 +77,36 @@ public:
 	bool operator!=(CColor Color)		{ return GetR()!=Color.GetR() || GetG()!=Color.GetG() || GetB()!=Color.GetB() || GetA()!=Color.GetA(); }
 
 	//primary colors
-	static CColor Red(Uint8 shade=255)							{ return(CColor(shade,0,0)); }
-	static CColor Green(Uint8 shade=255)						{ return(CColor(0,shade,0)); }
-	static CColor Blue(Uint8 shade=255)							{ return(CColor(0,0,shade)); }
+	static CColor Red(uint8_t shade=255)				{ return(CColor(shade,0,0)); }
+	static CColor Green(uint8_t shade=255)				{ return(CColor(0,shade,0)); }
+	static CColor Blue(uint8_t shade=255)				{ return(CColor(0,0,shade)); }
 
 	//secondary colors
-	static CColor Yellow(Uint8 shade=255)						{ return(Red(shade)|Green(shade)); }
-	static CColor Cyan(Uint8 shade=255)							{ return(Green(shade)|Blue(shade)); }
-	static CColor Magenta(Uint8 shade=255)						{ return(Red(shade)|Blue(shade)); }
+	static CColor Yellow(uint8_t shade=255)				{ return(Red(shade)|Green(shade)); }
+	static CColor Cyan(uint8_t shade=255)				{ return(Green(shade)|Blue(shade)); }
+	static CColor Magenta(uint8_t shade=255)			{ return(Red(shade)|Blue(shade)); }
 
 	// dark colours
-	static CColor DarkRed(Uint8 shade=128)						{ return(Red(shade)); }
-	static CColor DarkGreen(Uint8 shade=128)					{ return(Green(shade)); }
-	static CColor DarkBlue(Uint8 shade=128)						{ return(Blue(shade)); }
-	static CColor DarkYellow(Uint8 shade=128)					{ return(Yellow(shade)); }
-	static CColor DarkCyan(Uint8 shade=128)						{ return(Cyan(shade)); }
-	static CColor DarkMagenta(Uint8 shade=128)					{ return(Magenta(shade)); }
+	static CColor DarkRed(uint8_t shade=128)			{ return(Red(shade)); }
+	static CColor DarkGreen(uint8_t shade=128)			{ return(Green(shade)); }
+	static CColor DarkBlue(uint8_t shade=128)			{ return(Blue(shade)); }
+	static CColor DarkYellow(uint8_t shade=128)			{ return(Yellow(shade)); }
+	static CColor DarkCyan(uint8_t shade=128)			{ return(Cyan(shade)); }
+	static CColor DarkMagenta(uint8_t shade=128)		{ return(Magenta(shade)); }
 
 	// light colours	
-	static CColor LightRed(Uint8 gray=128,Uint8 shade=255)		{ return(Red(shade)|White(gray)); }
-	static CColor LightGreen(Uint8 gray=128,Uint8 shade=255)	{ return(Green(shade)|White(gray)); }
-	static CColor LightBlue(Uint8 gray=128,Uint8 shade=255)		{ return(Blue(shade)|White(gray)); }
-	static CColor LightYellow(Uint8 gray=128,Uint8 shade=255)	{ return(Yellow(shade)|White(gray)); }
-	static CColor LightCyan(Uint8 gray=128,Uint8 shade=255)		{ return(Cyan(shade)|White(gray)); }
-	static CColor LightMagenta(Uint8 gray=128,Uint8 shade=255)	{ return(Magenta(shade)|White(gray)); }
+	static CColor LightRed(uint8_t gray=128, uint8_t shade=255)		{ return(Red(shade)|White(gray)); }
+	static CColor LightGreen(uint8_t gray=128, uint8_t shade=255)	{ return(Green(shade)|White(gray)); }
+	static CColor LightBlue(uint8_t gray=128, uint8_t shade=255)	{ return(Blue(shade)|White(gray)); }
+	static CColor LightYellow(uint8_t gray=128, uint8_t shade=255)	{ return(Yellow(shade)|White(gray)); }
+	static CColor LightCyan(uint8_t gray=128, uint8_t shade=255)	{ return(Cyan(shade)|White(gray)); }
+	static CColor LightMagenta(uint8_t gray=128, uint8_t shade=255)	{ return(Magenta(shade)|White(gray)); }
 
 	// grayscale
-	static CColor White(Uint8 shade=255)						{ return(Red(shade)|Green(shade)|Blue(shade)); }
-	static CColor LightGray(Uint8 shade=192)					{ return(White(shade)); }
-	static CColor DarkGray(Uint8 shade=128)						{ return(White(shade)); }
-	static CColor Black(Uint8 shade=0)							{ return(White(shade)); }
+	static CColor White(uint8_t shade=255)						{ return(Red(shade)|Green(shade)|Blue(shade)); }
+	static CColor LightGray(uint8_t shade=192)					{ return(White(shade)); }
+	static CColor DarkGray(uint8_t shade=128)					{ return(White(shade)); }
+	static CColor Black(uint8_t shade=0)						{ return(White(shade)); }
 
 	static CColor AnyBut(CColor c)								{ CColor C = Black(); if (C == c) C = White(); return C; }
 	static CColor AnyBut(CColor c1, CColor c2)					{ CColor C = Black(); 

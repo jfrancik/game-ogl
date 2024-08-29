@@ -27,10 +27,10 @@ class EXT_DECL CGameApp
 	CGraphics* m_pGraphics;		// The main screen graphics
 	CColor m_colorClear;		// Background Colour
 
-	Uint16 m_FPS;				// Frames per Second rate
+	uint16_t m_FPS;				// Frames per Second rate
 
-	Uint32 m_nTimeStarted;		// System Time when the clock was started/resumed
-	Uint32 m_nTimePaused;		// Game Time when clock was suspended (or zero)
+	uint32_t m_nTimeStarted;	// System Time when the clock was started/resumed
+	uint32_t m_nTimePaused;		// Game Time when clock was suspended (or zero)
 	bool m_bRunning;			// set if clock is running (not suspended)
 
 public:
@@ -59,15 +59,15 @@ public:
 	CColor GetClearColor()				{ return m_colorClear; }
 	void SetClearColor(CColor c)		{ m_colorClear = c; }
 	void SetBackgroundColor(CColor c)	{ m_colorClear = c; }
-	Uint16 GetFPS()						{ return m_FPS; }
-	void SetFPS(Uint16 fps)				{ m_FPS = fps; }
+	uint16_t GetFPS()					{ return m_FPS; }
+	void SetFPS(uint16_t fps)			{ m_FPS = fps; }
 	
 	//////////////////////////////////////
 	// The Clock
 
-	Uint32 GetSystemTime();		// System Time may be not relevant to the game
+	uint32_t GetSystemTime();	// System Time may be not relevant to the game
 
-	Uint32 GetGameTime();		// Game Time, starts from 0 and suspends when paused
+	uint32_t GetGameTime();		// Game Time, starts from 0 and suspends when paused
 
 	void ResetClock();			// restarts the clock from zero
 	void SuspendClock();		// pauses the clock, the time will not progress

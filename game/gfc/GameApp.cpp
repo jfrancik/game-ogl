@@ -17,6 +17,12 @@ jarek@kingston.ac.uk
 #include "Game.h"
 #include "Graphics.h"
 
+#include "sdl/include/SDL.h"
+#include "sdl/include/SDL_ttf.h"
+
+// Some windows-specific features...
+#include "WindowsTools.h"
+
 //////////////////////////////////////
 // Constructor & Destructor
 
@@ -50,14 +56,14 @@ int CGameApp::GetHeight()		{ return GetGraphics() ? GetGraphics()->GetHeight() :
 //////////////////////////////////////
 // The Clock
 
-Uint32 CGameApp::GetSystemTime()
+uint32_t CGameApp::GetSystemTime()
 {
 	return SDL_GetTicks();
 }
 
-Uint32 CGameApp::GetGameTime()
+uint32_t CGameApp::GetGameTime()
 {
-	Uint32 t = GetSystemTime();
+	uint32_t t = GetSystemTime();
 	if (m_bRunning)
 		return m_nTimePaused + t - m_nTimeStarted;
 	else
@@ -104,7 +110,7 @@ bool CGameApp::OpenWindow(int nWidth, int nHeight, std::string strTitle, unsigne
 	if (m_pGame) m_pGame->SetSize(nWidth, nHeight);
 	
 	atexit(SDL_Quit);
-	m_pGraphics = new CGraphics(SDL_SetVideoMode(nWidth, nHeight, 0, SDLflags ? SDLflags : SDL_ANYFORMAT | SDL_SWSURFACE));
+	m_pGraphics = new CGraphics(nWidth, nHeight, 0, SDLflags ? SDLflags : SDL_ANYFORMAT | SDL_SWSURFACE);
 	if (!m_pGraphics)
 		return false;
 
@@ -124,7 +130,7 @@ bool CGameApp::OpenFullScreen(int nWidth, int nHeight, int nBpp)
 	if (m_pGame) m_pGame->SetSize(nWidth, nHeight);
 
 	atexit(SDL_Quit);
-	m_pGraphics = new CGraphics(SDL_SetVideoMode(nWidth, nHeight, nBpp, SDL_FULLSCREEN));
+	m_pGraphics = new CGraphics(nWidth, nHeight, nBpp, SDL_FULLSCREEN);
 	if (!m_pGraphics)
 		return false;
 
@@ -133,12 +139,8 @@ bool CGameApp::OpenFullScreen(int nWidth, int nHeight, int nBpp)
 
 bool CGameApp::OpenConsole()
 {
-	AllocConsole();
-	FILE *f;
-	freopen_s(&f, "conin$", "r", stdin);
-	freopen_s(&f, "conout$", "w", stdout);
-	freopen_s(&f, "conout$", "w", stderr);
-	printf("Games Foundation Classes ver. 2.60.\nCopyright (C) 2009-2018 Jarek Francik, Kingston University London\n");
+	OpenWindowsConsole();
+	printf("Games Foundation Classes ver. 3.00.\nCopyright (C) 2009-2024 Jarek Francik, Kingston University London\n");
 	return true;
 }
 
@@ -161,20 +163,7 @@ unsigned CGameApp::_GetSDLVersion()
 
 unsigned long long CGameApp::_GetWindowHandle()
 {
-	char *title, *icon;
-	SDL_WM_GetCaption(&title, &icon);
-	char *title2 = _strdup(title), *icon2 = _strdup(icon);
-	char buf[64], strrand[6], strtime[32];
-	_itoa_s(rand(), strrand, 10);
-	time_t t = time(NULL);
-	ctime_s(strtime, 32, &t);
-	strcpy_s(buf, "GFCTestWnd");
-	strcat_s(buf, strrand);
-	strcat_s(buf, strtime);
-	SDL_WM_SetCaption(buf, buf);
-	HWND hWnd = FindWindowA(NULL, buf);
-	SDL_WM_SetCaption(title2, icon2);
-	return (unsigned long long)hWnd;
+	return ::GetWindowHandle();
 }
 
 bool CGameApp::Run(CGame *pGame)
@@ -187,11 +176,11 @@ bool CGameApp::Run(CGame *pGame)
 	int idGame = 0;
 
 	ResetClock();
-	Uint32 timeStamp = GetSystemTime();
+	uint32_t timeStamp = GetSystemTime();
 	OnInitialize();
 	m_pGame->OnInitialize();
 //	m_pGame->OnDisplayMenu();
-	Uint32 nFrames;
+	uint32_t nFrames;
 
 	// again..
 	ResetClock();
@@ -200,7 +189,7 @@ bool CGameApp::Run(CGame *pGame)
 	// The Main Animation Loop
 	while (m_pGame->IsRunning())
 	{
-		Uint32 period = 1000 / m_FPS;
+		uint32_t period = 1000 / m_FPS;
 
 		while (m_pGame->IsRunning() && SDL_PollEvent(&anEvent))
 			if (!OnDispatchEvent(&anEvent))
@@ -226,7 +215,7 @@ bool CGameApp::Run(CGame *pGame)
 			// update the game
 			if (!m_pGame->IsPaused())
 			{
-				Uint32 T = GetGameTime();
+				uint32_t T = GetGameTime();
 				
 				// check the number of frames to cover
 				m_pGame->SetTime(T);

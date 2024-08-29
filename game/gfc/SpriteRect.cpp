@@ -13,7 +13,6 @@ Created by Jarek Francik
 jarek@kingston.ac.uk
 ****************************************************************************/
 #include "pch.h"
-#include "GFC.h"
 #include "SpriteRect.h"
 
 // Constructors with colour and outline colour

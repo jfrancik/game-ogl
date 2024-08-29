@@ -15,10 +15,16 @@ jarek@kingston.ac.uk
 #pragma once
 
 #include "Vector.h"
-#include "SDL_keysym.h"
-#include "SDL_TTF.h"
+#include "Rectangle.h"
+#ifdef _USRDLL
+#include <SDL_keysym.h>
+#else
+#include "gfc/sdl/include/SDL_keysym.h"
+#endif
 class CGameApp;
 class CGraphics;
+
+union SDL_Event;
 
 class EXT_DECL CGame
 {
@@ -46,19 +52,19 @@ private:
 
 	///////////////////////////////////////////////
 	// Game Level
-	volatile Sint16 m_level;			// current game level
-	volatile Sint16 m_levelReq;			// requested game level
+	volatile int16_t m_level;			// current game level
+	volatile int16_t m_levelReq;		// requested game level
 
 	///////////////////////////////////////////////
 	// Key States
-	Uint8 *m_kbarray;					// pointer to keyboard states array
+	uint8_t *m_kbarray;					// pointer to keyboard states array
 	bool m_bMouseFocus;
 
 	///////////////////////////////////////////////
 	// Game Timing
-	volatile Uint32 m_time;				// set automatically by the framework (CGameApp)
-	volatile Uint32 m_timePrev;			// time of the previous update (used to calculate DeltaTime)
-	volatile Uint32 m_timeGameOver;		// set automatically by the framework (CGameApp)
+	volatile uint32_t m_time;			// set automatically by the framework (CGameApp)
+	volatile uint32_t m_timePrev;		// time of the previous update (used to calculate DeltaTime)
+	volatile uint32_t m_timeGameOver;	// set automatically by the framework (CGameApp)
 
 public:
 	// Accessor Functions
@@ -72,15 +78,15 @@ public:
 	// Game Geometry: simple but usable implementation
 
 	CVectorI GetSize()					{ return m_dim; }
-	Sint16 GetWidth()					{ return m_dim.X(); }
-	Sint16 GetHeight()					{ return m_dim.Y(); }
+	int16_t GetWidth()					{ return m_dim.X(); }
+	int16_t GetHeight()					{ return m_dim.Y(); }
 
 	///////////////////////////////////////////////
 	// Time Utilities
 	
-	Uint32 GetTime()					{ return m_time; }
-	Uint32 GetDeltaTime()				{ return m_time - m_timePrev; }
-	Uint32 GetTimeGameOver()			{ return m_timeGameOver; }
+	uint32_t GetTime()					{ return m_time; }
+	uint32_t GetDeltaTime()				{ return m_time - m_timePrev; }
+	uint32_t GetTimeGameOver()			{ return m_timeGameOver; }
 
 	///////////////////////////////////////////////
 	// Keyboard and Mouse State Functions
@@ -89,7 +95,7 @@ public:
 	bool IsKeyDown(SDLKey sym);
 
 	CVectorI GetMouseCoords();
-	void GetMouseCoords(Uint16 &x, Uint16 &y);
+	void GetMouseCoords(uint16_t &x, uint16_t&y);
 	bool IsMouseFocus();
 	bool IsLButtonDown();
 	bool IsRButtonDown();
@@ -125,8 +131,8 @@ public:
 	///////////////////////////////////////////////
 	// Game Level
 
-	Sint16 GetLevel()					{ return m_level; }
-	void SetLevel(Sint16 level)			{ m_levelReq = level; }
+	int16_t GetLevel()					{ return m_level; }
+	void SetLevel(int16_t level)		{ m_levelReq = level; }
 	void NewLevel()						{ SetLevel(GetLevel() + 1); }
 
 	///////////////////////////////////////////////
@@ -140,7 +146,7 @@ public:
 	virtual void OnInitialize()			{ }
 	virtual void OnDisplayMenu()		{ }
 	virtual void OnStartGame()			{ }
-	virtual void OnStartLevel(Sint16 nLevel)	{ }
+	virtual void OnStartLevel(int16_t nLevel)	{ }
 	virtual void OnGameOver()			{ }
 	virtual void OnUpdate()				{ }
 	virtual void OnDraw(CGraphics* g)	{ }
@@ -162,24 +168,24 @@ public:
 	virtual bool OnEvent(SDL_Event* pEvent);
 
 	// Keyboard events
-	virtual void OnKeyDown(SDLKey sym, SDLMod mod, Uint16 unicode);
-	virtual void OnKeyUp(SDLKey sym, SDLMod mod, Uint16 unicode);
+	virtual void OnKeyDown(SDLKey sym, SDLMod mod, uint16_t unicode);
+	virtual void OnKeyUp(SDLKey sym, SDLMod mod, uint16_t unicode);
 
 	// Mouse events
-	virtual void OnMouseMove(Uint16 x,Uint16 y,Sint16 relx,Sint16 rely,bool bLeft,bool bRight,bool bMiddle);
-	virtual void OnLButtonDown(Uint16 x,Uint16 y);
-	virtual void OnLButtonUp(Uint16 x,Uint16 y);
-	virtual void OnRButtonDown(Uint16 x,Uint16 y);
-	virtual void OnRButtonUp(Uint16 x,Uint16 y);
-	virtual void OnMButtonDown(Uint16 x,Uint16 y);
-	virtual void OnMButtonUp(Uint16 x,Uint16 y);
+	virtual void OnMouseMove(uint16_t x, uint16_t y, int16_t relx, int16_t rely,bool bLeft,bool bRight,bool bMiddle);
+	virtual void OnLButtonDown(uint16_t x, uint16_t y);
+	virtual void OnLButtonUp(uint16_t x, uint16_t y);
+	virtual void OnRButtonDown(uint16_t x, uint16_t y);
+	virtual void OnRButtonUp(uint16_t x, uint16_t y);
+	virtual void OnMButtonDown(uint16_t x, uint16_t y);
+	virtual void OnMButtonUp(uint16_t x, uint16_t y);
 
 	// Joystick events
-	virtual void OnJoyAxis(Uint8 which,Uint8 axis,Sint16 value);
-	virtual void OnJoyButtonDown(Uint8 which,Uint8 button);
-	virtual void OnJoyButtonUp(Uint8 which,Uint8 button);
-	virtual void OnJoyHat(Uint8 which,Uint8 hat,Uint8 value);
-	virtual void OnJoyBall(Uint8 which,Uint8 ball,Sint16 xrel,Sint16 yrel);
+	virtual void OnJoyAxis(uint8_t which, uint8_t axis, int16_t value);
+	virtual void OnJoyButtonDown(uint8_t which, uint8_t button);
+	virtual void OnJoyButtonUp(uint8_t which, uint8_t button);
+	virtual void OnJoyHat(uint8_t which, uint8_t hat, uint8_t value);
+	virtual void OnJoyBall(uint8_t which, uint8_t ball, int16_t xrel, int16_t yrel);
 
 	// Active Events (keyboard)
 	virtual void OnInputFocus();
@@ -198,12 +204,12 @@ public:
 	virtual void OnExpose();
 
 	// User Event
-	virtual void OnUserEvent(Uint8 type,int code,void* data1,void* data2);
+	virtual void OnUserEvent(uint8_t type,int code,void* data1,void* data2);
 
 //////////////////////////////////////////////////////////////////
 // These functions are provided strictly for CGameApp internal use
 private:
-	void SetSize(Sint16 x, Sint16 y)	{ m_dim = CVectorI(x, y); }
+	void SetSize(int16_t x, int16_t y)	{ m_dim = CVectorI(x, y); }
 	void SetApp(CGameApp *p)			{ m_pApp = p; }
 	void ResetTime(long t = 0)			{ m_time = m_timePrev = t; }
 	void SetTime(long t)				{ m_time = t; }

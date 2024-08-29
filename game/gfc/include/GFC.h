@@ -49,12 +49,23 @@ jarek@kingston.ac.uk
 #include "GameApp.h"
 #include "Game.h"
 #include "Graphics.h"
+#include "RendererFactory.h"
 #include "Sprite.h"
 #include "SpriteRect.h"
 #include "SpriteOval.h"
 #include "SpriteText.h"
 #include "SpriteContainer.h"
 #include "Sound.h"
-#include "Font.h"
+//#include "Font.h"
 
+///////////////////////////////////////
+// WINDOWS SPECIFIC
+// Allows for client's programs to use main function instead of WinMain
 
+#include <windows.h>
+#undef LoadImage
+int main(int argc, char* argv[]);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	return main(0, NULL);
+}

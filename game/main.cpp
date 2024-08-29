@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
 	//app.DebugMemoryLeaks();
 	app.OpenConsole();
-	app.OpenWindow(1280, 720, "OpenGL Test (limited)", SDL_OPENGL);
+	app.OpenWindow(800, 600, "My Game!");
 	//app.OpenFullScreen(800, 600, 24);
 	app.SetClearColor(CColor::White());
 	app.Run(&game);

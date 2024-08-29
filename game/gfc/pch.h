@@ -47,15 +47,6 @@ jarek@kingston.ac.uk
 #define GFC_VERSION	270
 #endif
 
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_mixer.h"
-#include "SDL_net.h"
-#include "SDL_ttf.h"
-#include "SDL_rotozoom.h"
-#include "SDL_gfxPrimitives.h"
-#include "SDL_syswm.h"
-
 #ifndef max
 #define max(x, y)	((x) > (y) ? (x) : (y))
 #endif

@@ -119,10 +119,10 @@ public:
 	bool operator !=(const TVECTOR pt)			{ return (m_x != pt.m_x || m_y != pt.m_y); }
 };
 
-template class EXT_DECL TVector<float,Sint16>;
-template class EXT_DECL TVector<Sint16,float>;
+template class EXT_DECL TVector<float,int16_t>;
+template class EXT_DECL TVector<int16_t,float>;
 
-typedef TVector<float,Sint16> CVector;
-typedef TVector<Sint16,float> CVectorI;
+typedef TVector<float, int16_t> CVector;
+typedef TVector<int16_t,float> CVectorI;
 
 #endif

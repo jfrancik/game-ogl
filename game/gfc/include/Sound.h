@@ -15,7 +15,11 @@ jarek@kingston.ac.uk
 #pragma once
 
 #include "FileMgr.h"
-#include "SDL_mixer.h"
+#ifdef _USRDLL
+#include <SDL_mixer.h>
+#else
+#include "gfc/sdl/include/SDL_mixer.h"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // CSound objects represent sound effects, typically loaded from external files.
