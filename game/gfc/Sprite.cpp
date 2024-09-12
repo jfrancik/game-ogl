@@ -20,167 +20,123 @@ using namespace std;
 /////////////////////////////////////////////////////////////////////
 // Constructors and Destructors
 
-void CSprite::_local_init(float x, float y, float w, float h, uint32_t time)
+CSprite::CSprite() : CSprite(0, 0, 0, 0, 0)
 {
-	m_pGraphics = NULL;
-	m_pRoto = NULL;
-	m_pos.m_x = x; m_pos.m_y = y;
-	m_pt1.m_x = -w/2; m_pt1.m_y = -h/2;
-	m_pt2.m_x =  w/2; m_pt2.m_y =  h/2;
-	m_time = time;
-	m_state = 0;
-	m_health = 0.f;
-	m_v = CVector(0, 1);
-	m_fv = 0.0;
-	m_rot = m_omega = 0.0;
-	Invalidate();
-	ResetColorKey();
-	m_pFrames = NULL;
-	m_nFrames = 0;
-	m_bDeleted = false;
-	m_timeDeath = 0;
 }
-
-CSprite::CSprite()
-{
-	_local_init(0, 0, 0, 0, 0);
-}
-
 CSprite::CSprite(CVector v, float w, float h, uint32_t time)
 {
-	_local_init(v.GetX(), v.GetY(), w, h, time);
-	OnPrepareGraphics();
-}
-CSprite::CSprite(CVector v, float w, float h, char *pFileBitmap, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), w, h, time);
-	LoadImage(pFileBitmap); 
-	SetImage(pFileBitmap, false);
-}
-CSprite::CSprite(CVector v, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), w, h, time);
-	LoadImage(pFileBitmap, colorKey); 
-	SetImage(pFileBitmap, false);
-}
-CSprite::CSprite(CVector v, char *pFileBitmap, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), 0, 0, time);
-	LoadImage(pFileBitmap); 
-	SetImage(pFileBitmap);
-}
-CSprite::CSprite(CVector v, char *pFileBitmap, CColor colorKey, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), 0, 0, time);
-	LoadImage(pFileBitmap, colorKey); 
-	SetImage(pFileBitmap);
-}
-CSprite::CSprite(CVector v, float w, float h, CGraphics *pGraphics, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), w, h, time);
-	SetImage(pGraphics, false);
-}
-CSprite::CSprite(CVector v, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), w, h, time);
-	SetImage(pGraphics, false);
-	SetColorKey(colorKey);
-}
-CSprite::CSprite(CVector v, CGraphics *pGraphics, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), 0, 0, time);
-	SetImage(pGraphics);
-}
-CSprite::CSprite(CVector v, CGraphics *pGraphics, CColor colorKey, uint32_t time)
-{
-	_local_init(v.GetX(), v.GetY(), 0, 0, time);
-	SetImage(pGraphics);
-	SetColorKey(colorKey);
-}
+	m_pos = v;
+	m_pt1 = -CVector(w / 2, h / 2);
+	m_pt2 = CVector(w / 2, h / 2);
 
-CSprite::CSprite(float x, float y, float w, float h, uint32_t time)
-{
-	_local_init(x, y, w, h, time);
-	OnPrepareGraphics();
+	m_time = time;
+
+	//Invalidate();
+	//ResetColorKey();
+	//OnPrepareGraphics();
 }
-CSprite::CSprite(float x, float y, float w, float h, char *pFileBitmap, uint32_t time)
+CSprite::CSprite(CVector v, float w, float h, char *pFileBitmap, uint32_t time) : CSprite(v, w, h, time)
 {
-	_local_init(x, y, w, h, time);
 	LoadImage(pFileBitmap); 
 	SetImage(pFileBitmap, false);
 }
-CSprite::CSprite(float x, float y, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time)
+CSprite::CSprite(CVector v, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time) : CSprite(v, w, h, time)
 {
-	_local_init(x, y, w, h, time);
 	LoadImage(pFileBitmap, colorKey); 
 	SetImage(pFileBitmap, false);
 }
-CSprite::CSprite(float x, float y, char *pFileBitmap, uint32_t time)
+CSprite::CSprite(CVector v, char *pFileBitmap, uint32_t time) : CSprite(v, 0, 0, time)
 {
-	_local_init(x, y, 0, 0, time);
 	LoadImage(pFileBitmap); 
 	SetImage(pFileBitmap);
 }
-CSprite::CSprite(float x, float y, char *pFileBitmap, CColor colorKey, uint32_t time)
+CSprite::CSprite(CVector v, char *pFileBitmap, CColor colorKey, uint32_t time) : CSprite(v, 0, 0, time)
 {
-	_local_init(x, y, 0, 0, time);
 	LoadImage(pFileBitmap, colorKey); 
 	SetImage(pFileBitmap);
 }
-CSprite::CSprite(float x, float y, float w, float h, CGraphics *pGraphics, uint32_t time)
+CSprite::CSprite(CVector v, float w, float h, CGraphics *pGraphics, uint32_t time) : CSprite(v, w, h, time)
 {
-	_local_init(x, y, w, h, time);
 	SetImage(pGraphics, false);
 }
-CSprite::CSprite(float x, float y, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time)
+CSprite::CSprite(CVector v, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time) : CSprite(v, w, h, time)
 {
-	_local_init(x, y, w, h, time);
+	SetImage(pGraphics, colorKey, false);
+}
+CSprite::CSprite(CVector v, CGraphics *pGraphics, uint32_t time) : CSprite(v, 0, 0, time)
+{
+	SetImage(pGraphics);
+}
+CSprite::CSprite(CVector v, CGraphics *pGraphics, CColor colorKey, uint32_t time) : CSprite(v, 0, 0, time)
+{
+	SetImage(pGraphics, colorKey);
+}
+
+CSprite::CSprite(float x, float y, float w, float h, uint32_t time) : CSprite(CVector(x, y), w, h, time)
+{
+}
+CSprite::CSprite(float x, float y, float w, float h, char *pFileBitmap, uint32_t time) : CSprite(x, y, w, h, time)
+{
+	LoadImage(pFileBitmap); 
+	SetImage(pFileBitmap, false);
+}
+CSprite::CSprite(float x, float y, float w, float h, char *pFileBitmap, CColor colorKey, uint32_t time) : CSprite(x, y, w, h, time)
+{
+	LoadImage(pFileBitmap, colorKey); 
+	SetImage(pFileBitmap, false);
+}
+CSprite::CSprite(float x, float y, char *pFileBitmap, uint32_t time) : CSprite(x, y, 0, 0, time)
+{
+	LoadImage(pFileBitmap); 
+	SetImage(pFileBitmap);
+}
+CSprite::CSprite(float x, float y, char *pFileBitmap, CColor colorKey, uint32_t time) : CSprite(x, y, 0, 0, time)
+{
+	LoadImage(pFileBitmap, colorKey); 
+	SetImage(pFileBitmap);
+}
+CSprite::CSprite(float x, float y, float w, float h, CGraphics *pGraphics, uint32_t time) : CSprite(x, y, w, h, time)
+{
 	SetImage(pGraphics, false);
-	SetColorKey(colorKey);
 }
-CSprite::CSprite(float x, float y, CGraphics *pGraphics, uint32_t time)
+CSprite::CSprite(float x, float y, float w, float h, CGraphics *pGraphics, CColor colorKey, uint32_t time) : CSprite(x, y, w, h, time)
 {
-	_local_init(x, y, 0, 0, time);
+	SetImage(pGraphics, colorKey, false);
+}
+CSprite::CSprite(float x, float y, CGraphics *pGraphics, uint32_t time) : CSprite(x, y, 0, 0, time)
+{
 	SetImage(pGraphics);
 }
-CSprite::CSprite(float x, float y, CGraphics *pGraphics, CColor colorKey, uint32_t time)
+CSprite::CSprite(float x, float y, CGraphics *pGraphics, CColor colorKey, uint32_t time) : CSprite(x, y, 0, 0, time)
 {
-	_local_init(x, y, 0, 0, time);
-	SetImage(pGraphics);
-	SetColorKey(colorKey);
+	SetImage(pGraphics, colorKey);
 }
 
-CSprite::CSprite(CRectangle r, uint32_t time)
+CSprite::CSprite(CRectangle r, uint32_t time) : CSprite(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time)
 {
-	_local_init(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time);
-	OnPrepareGraphics();
+	//OnPrepareGraphics();
 }
 
-CSprite::CSprite(CRectangle r, char *pFileBitmap, uint32_t time)
+CSprite::CSprite(CRectangle r, char *pFileBitmap, uint32_t time) : CSprite(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time)
 {
-	_local_init(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time);
 	LoadImage(pFileBitmap); 
 	SetImage(pFileBitmap, false);
 }
 
-CSprite::CSprite(CRectangle r, char *pFileBitmap, CColor colorKey, uint32_t time)
+CSprite::CSprite(CRectangle r, char *pFileBitmap, CColor colorKey, uint32_t time) : CSprite(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time)
 {
-	_local_init(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time);
 	LoadImage(pFileBitmap, colorKey); 
 	SetImage(pFileBitmap, false);
 }
 
-CSprite::CSprite(CRectangle r, CGraphics *pGraphics, uint32_t time)
+CSprite::CSprite(CRectangle r, CGraphics *pGraphics, uint32_t time) : CSprite(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time)
 {
-	_local_init(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time);
 	SetImage(pGraphics, false);
 }
 
-CSprite::CSprite(CRectangle r, CGraphics *pGraphics, CColor colorKey, uint32_t time)
+CSprite::CSprite(CRectangle r, CGraphics *pGraphics, CColor colorKey, uint32_t time) : CSprite(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time)
 {
-	_local_init(r.GetCenterX(), r.GetCenterY(), r.w, r.h, time);
-	SetImage(pGraphics, false);
-	SetColorKey(colorKey);
+	SetImage(pGraphics, colorKey, false);
 }
 
 CSprite::~CSprite(void)
@@ -363,16 +319,16 @@ void CSprite::LoadAnimation(char *pFileName, char *pAliasName, SHEET grid)
 		AddImage(pFileName, pAliasName, _grid.m_numCols, _grid.m_numRows, _rowcol.m_iRowCol, _from.iFrom, _rowcol.m_iRowCol, grid.iTo, _rowcol.m_bHorizontally);
 }
 
-//void CSprite::LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey)
-//{
-//	auto _from = grid.m_from;
-//	auto _rowcol = _from.m_rowcol;
-//	auto _grid = _rowcol.m_grid;
-//	if (_rowcol.m_bHorizontally)
-//		AddImage(p, pAliasName, _grid.m_numCols, _grid.m_numRows, _from.iFrom, _rowcol.m_iRowCol, grid.iTo, _rowcol.m_iRowCol, colorKey, _rowcol.m_bHorizontally);
-//	else
-//		AddImage(p, pAliasName, _grid.m_numCols, _grid.m_numRows, _rowcol.m_iRowCol, _from.iFrom, _rowcol.m_iRowCol, grid.iTo, colorKey, _rowcol.m_bHorizontally);
-//}
+void CSprite::LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey)
+{
+	auto _from = grid.m_from;
+	auto _rowcol = _from.m_rowcol;
+	auto _grid = _rowcol.m_grid;
+	if (_rowcol.m_bHorizontally)
+		AddImage(p, pAliasName, _grid.m_numCols, _grid.m_numRows, _from.iFrom, _rowcol.m_iRowCol, grid.iTo, _rowcol.m_iRowCol, colorKey, _rowcol.m_bHorizontally);
+	else
+		AddImage(p, pAliasName, _grid.m_numCols, _grid.m_numRows, _rowcol.m_iRowCol, _from.iFrom, _rowcol.m_iRowCol, grid.iTo, colorKey, _rowcol.m_bHorizontally);
+}
 
 void CSprite::LoadAnimation(char *pFileName, char *pAliasName, SHEET grid, CColor colorKey)
 {
@@ -441,33 +397,33 @@ void CSprite::AddImage(char *pFileName, char *pAliasName, short numCols, short n
 				AddProperty(pAliasName, &CGraphics(pFileName, numCols, numRows, iCol, iRow)); 
 }
 
-//void CSprite::AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally)	
-//{ 
-//	if (iColFrom < 0) iColFrom = 0;
-//	if (iRowFrom < 0) iRowFrom = 0;
-//	if (iColTo < 0) iColTo = numCols - 1;
-//	if (iRowTo < 0) iRowTo = numRows - 1;
-//
-//	if (iColTo >= numCols) iColTo = numCols - 1;
-//	if (iColFrom >= numCols) iColFrom = iColTo;
-//	if (iRowTo >= numRows) iRowTo = numRows - 1;
-//	if (iRowFrom >= numRows) iRowFrom = iRowTo;
-//
-//	int nRows = abs(iRowTo - iRowFrom) + 1;
-//	int nCols = abs(iColTo - iColFrom) + 1;
-//	int iRowStep = iRowTo >= iRowFrom ? 1 : -1;
-//	int iColStep = iColTo >= iColFrom ? 1 : -1;
-//
-//	int iRow, iCol, i, j;
-//	if (bHorizontally)
-//		for (i = 0, iRow = iRowFrom; i < nRows; i++, iRow += iRowStep)
-//			for (j = 0, iCol = iColFrom; j < nCols; j++, iCol += iColStep)
-//				AddProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); 
-//	else
-//		for (j = 0, iCol = iColFrom; j < nCols; j++, iCol += iColStep)
-//			for (i = 0, iRow = iRowFrom; i < nRows; i++, iRow += iRowStep)
-//				AddProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); 
-//}
+void CSprite::AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally)	
+{ 
+	if (iColFrom < 0) iColFrom = 0;
+	if (iRowFrom < 0) iRowFrom = 0;
+	if (iColTo < 0) iColTo = numCols - 1;
+	if (iRowTo < 0) iRowTo = numRows - 1;
+
+	if (iColTo >= numCols) iColTo = numCols - 1;
+	if (iColFrom >= numCols) iColFrom = iColTo;
+	if (iRowTo >= numRows) iRowTo = numRows - 1;
+	if (iRowFrom >= numRows) iRowFrom = iRowTo;
+
+	int nRows = abs(iRowTo - iRowFrom) + 1;
+	int nCols = abs(iColTo - iColFrom) + 1;
+	int iRowStep = iRowTo >= iRowFrom ? 1 : -1;
+	int iColStep = iColTo >= iColFrom ? 1 : -1;
+
+	int iRow, iCol, i, j;
+	if (bHorizontally)
+		for (i = 0, iRow = iRowFrom; i < nRows; i++, iRow += iRowStep)
+			for (j = 0, iCol = iColFrom; j < nCols; j++, iCol += iColStep)
+				AddProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); 
+	else
+		for (j = 0, iCol = iColFrom; j < nCols; j++, iCol += iColStep)
+			for (i = 0, iRow = iRowFrom; i < nRows; i++, iRow += iRowStep)
+				AddProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); 
+}
 
 void CSprite::AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally)	
 { 
@@ -500,10 +456,16 @@ void CSprite::AddImage(char *pFileName, char *pAliasName, short numCols, short n
 void CSprite::SetImage(CGraphics *p, bool bChangeSize)
 {
 	ClearImage();
-	m_pGraphics = new CGraphics(*p);
+	m_pGraphics = new CGraphics(p);
 	if (bChangeSize) SetSize((float)m_pGraphics->GetWidth(), (float)m_pGraphics->GetHeight());
 }
 
+void CSprite::SetImage(CGraphics* p, CColor colorKey, bool bChangeSize)
+{
+	ClearImage();
+	m_pGraphics = new CGraphics(p, colorKey);
+	if (bChangeSize) SetSize((float)m_pGraphics->GetWidth(), (float)m_pGraphics->GetHeight());
+}
 
 void CSprite::SetAnimation(char *pPropName, int fps, int nIndexStart, int numFrames)
 {
@@ -860,8 +822,11 @@ void CSprite::VoidDraw()
 
 void CSprite::OnPrepareGraphics(CGraphics*)
 {
+	if (m_pGraphics && !GetWidth() || !GetHeight())
+		SetSize((float)m_pGraphics->GetWidth(), (float)m_pGraphics->GetHeight());
+
 	if (m_pGraphics) return;
-	if (!GetWidth() || !GetHeight()) return;
+
 	m_pGraphics = new CGraphics((int)GetWidth(), (int)GetHeight(), 32, 0xff0000, 0xff00, 0xff, 0);
 }
 

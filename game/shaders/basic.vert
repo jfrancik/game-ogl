@@ -1,5 +1,5 @@
 // VERTEX SHADER
-#version 330
+#version 400
 
 // Matrices
 uniform mat4 matrixProjection;
@@ -11,6 +11,7 @@ in vec2 aTexCoord;
 out vec4 color;
 out vec4 position;
 out vec2 texCoord0;
+
 
 void main(void) 
 {

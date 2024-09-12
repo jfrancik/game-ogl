@@ -23,190 +23,227 @@ using namespace std;
 /////////////////////////////////////////////////////////
 // constructor
 
-CGraphics::CGraphics(int width, int height, int depth, uint32_t flagsCreation)
+CGraphics::CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(width, height, depth, flagsCreation);
 	m_ml = m_mr = 5; m_mu = m_mb = 2;
 	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
+CGraphics::CGraphics(int width, int height, int depth, uint32_t flagsCreation) : CGraphics()
+{
+	m_pRenderer = CRendererFactory::Create(
+		[width, height, depth, flagsCreation](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Initialise(width, height, depth, flagsCreation);
+		}, true);
+}
 
-// from a SDL Surface
-//CGraphics::CGraphics(void* pSurface)
-//{
-//	m_pRenderer = CRendererFactory::Instance().Create();
-//	m_pRenderer->CreateFromSurface(pSurface);
-//	m_ml = m_mr = 5; m_mu = m_mb = 2;
-//	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
-//}
-
-// from a CSurface object
-CGraphics::CGraphics(IRenderer* pRenderer)
+// from a IRenderer object
+CGraphics::CGraphics(std::shared_ptr<IRenderer> pRenderer) : CGraphics()
 {
 	m_pRenderer = pRenderer;
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
 }
 
 // memory canvas
-CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
+CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[width, height, depth, Rmask, Gmask, Bmask, Amask](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
+		});
 }
 
-CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask, CColor colorKey)
+CGraphics::CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask, CColor colorKey) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[width, height, depth, Rmask, Gmask, Bmask, Amask, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(width, height, depth, Rmask, Gmask, Bmask, Amask);
+			pRenderer->SetColorKey(colorKey);
+		});
+	
 }
 
 // memory canvas compatible with the current display
-CGraphics::CGraphics(int width, int height)
+CGraphics::CGraphics(int width, int height) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(width, height);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[width, height](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(width, height);
+		});
 }
 
-CGraphics::CGraphics(int width, int height, CColor colorKey)
+CGraphics::CGraphics(int width, int height, CColor colorKey) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(width, height);
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[width, height, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(width, height);
+			pRenderer->SetColorKey(colorKey);
+		});
 }
 
 // from a loaded bitmap
-CGraphics::CGraphics(string sFileName)
+CGraphics::CGraphics(string sFileName) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName);
+		});
 }
 
-CGraphics::CGraphics(string sFileName, CColor colorKey)
+CGraphics::CGraphics(string sFileName, CColor colorKey) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName);
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName);
+			pRenderer->SetColorKey(colorKey);
+		});
 }
 
 // copy constructor
-CGraphics::CGraphics(CGraphics &g)
+CGraphics::CGraphics(CGraphics &g) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(g.GetRenderer());
+	std::shared_ptr<IRenderer> pCopied = g.GetRenderer();
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(*pCopied);
+			if (pCopied->IsColorKeySet()) pRenderer->SetColorKey(pCopied->GetColorKey());
+		});
 
-	if (g.IsColorKeySet()) SetColorKey(g.GetColorKey());
 	m_ml = g.m_ml; m_mr = g.m_mr; m_mu = g.m_mu; m_mb = g.m_mb;
 	m_fontSize = g.m_fontSize; m_fontHeight = g.m_fontHeight; m_fontWidth = g.m_fontWidth; m_fontAscent = g.m_fontAscent; m_fontDescent = g.m_fontDescent; m_fontLeading = g.m_fontLeading; m_fontBaseline = g.m_fontBaseline;
 }
 
 // copy from a pointer
-CGraphics::CGraphics(CGraphics *pG)
+CGraphics::CGraphics(CGraphics *pG) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL);
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(*pCopied);
+			if (pCopied->IsColorKeySet()) pRenderer->SetColorKey(pCopied->GetColorKey());
+		});
 
 	if (pG)
 	{
-		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
 		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
 		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
-	else
+}
+
+// copy from a pointer
+CGraphics::CGraphics(CGraphics* pG, CColor colorKey) : CGraphics()
+{
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(*pCopied);
+			pRenderer->SetColorKey(colorKey);
+		});
+
+	if (pG)
 	{
-		m_ml = m_mr = 5; m_mu = m_mb = 2;
-		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
 }
 
 // Rectangular Fragment
-CGraphics::CGraphics(CGraphics *pG, CRectangle rect)
+CGraphics::CGraphics(CGraphics *pG, CRectangle rect) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL, rect);
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied, rect](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(pCopied, rect);
+			if (pCopied->IsColorKeySet()) pRenderer->SetColorKey(pCopied->GetColorKey());
+		});
 
 	if (pG)
 	{
-		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
 		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
 		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
-	else
+}
+
+CGraphics::CGraphics(string sFileName, CRectangle rect) : CGraphics()
+{
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName, rect](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName, rect);
+		});
+}
+
+CGraphics::CGraphics(CGraphics* pG, CRectangle rect, CColor colorKey) : CGraphics()
+{
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied, rect, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(pCopied, rect);
+			pRenderer->SetColorKey(colorKey);
+		});
+
+	if (pG)
 	{
-		m_ml = m_mr = 5; m_mu = m_mb = 2;
-		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
 }
 
-CGraphics::CGraphics(string sFileName, CRectangle rect)
+CGraphics::CGraphics(string sFileName, CRectangle rect, CColor colorKey) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName, rect);
-
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
-}
-
-CGraphics::CGraphics(string sFileName, CRectangle rect, CColor colorKey)
-{
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName, rect);
-
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName, rect, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName, rect);
+			pRenderer->SetColorKey(colorKey);
+		});
 }
 
 // Tiled Fragment
-CGraphics::CGraphics(CGraphics *pG, short numCols, short numRows, short iCol, short iRow)
+CGraphics::CGraphics(CGraphics *pG, short numCols, short numRows, short iCol, short iRow) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(pG ? pG->GetRenderer() : NULL, numCols, numRows, iCol, iRow);
-	
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied, numCols, numRows, iCol, iRow](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(pCopied, numCols, numRows, iCol, iRow);
+			if (pCopied->IsColorKeySet()) pRenderer->SetColorKey(pCopied->GetColorKey());
+		});
+
 	if (pG)
 	{
-		if (pG->IsColorKeySet()) SetColorKey(pG->GetColorKey());
 		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
 		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
-	else
+}
+
+CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow) : CGraphics()
+{
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName, numCols, numRows, iCol, iRow](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
+		});
+}
+
+CGraphics::CGraphics(CGraphics* pG, short numCols, short numRows, short iCol, short iRow, CColor colorKey) : CGraphics()
+{
+	std::shared_ptr<IRenderer> pCopied = pG ? pG->GetRenderer() : NULL;
+	m_pRenderer = CRendererFactory::Create(
+		[pCopied, numCols, numRows, iCol, iRow, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(pCopied, numCols, numRows, iCol, iRow);
+			pRenderer->SetColorKey(colorKey);
+		});
+
+	if (pG)
 	{
-		m_ml = m_mr = 5; m_mu = m_mb = 2;
-		m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+		m_ml = pG->m_ml; m_mr = pG->m_mr; m_mu = pG->m_mu; m_mb = pG->m_mb;
+		m_fontSize = pG->m_fontSize; m_fontHeight = pG->m_fontHeight; m_fontWidth = pG->m_fontWidth; m_fontAscent = pG->m_fontAscent; m_fontDescent = pG->m_fontDescent; m_fontLeading = pG->m_fontLeading; m_fontBaseline = pG->m_fontBaseline;
 	}
 }
 
-CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow)
+CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey) : CGraphics()
 {
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
-
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
-}
-
-CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)
-{
-	m_pRenderer = CRendererFactory::Instance().Create();
-	m_pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
-
-	SetColorKey(colorKey);
-	m_ml = m_mr = 5; m_mu = m_mb = 2;
-	m_fontSize = m_fontHeight = m_fontWidth = m_fontAscent = m_fontDescent = m_fontLeading = m_fontBaseline = 0;
+	m_pRenderer = CRendererFactory::Create(
+		[sFileName, numCols, numRows, iCol, iRow, colorKey](std::shared_ptr<IRenderer> pRenderer) {
+			pRenderer->Create(sFileName, numCols, numRows, iCol, iRow);
+			pRenderer->SetColorKey(colorKey);
+		});
 }
 
 /////////////////////////////////////////////////////////
@@ -214,11 +251,6 @@ CGraphics::CGraphics(string sFileName, short numCols, short numRows, short iCol,
 
 CGraphics::~CGraphics() 
 {
-	if (m_pRenderer)
-	{
-		delete m_pRenderer;
-		m_pRenderer = NULL;
-	}
 }
 
 /////////////////////////////////////////////////////////

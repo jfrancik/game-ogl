@@ -26,22 +26,31 @@ class EXT_DECL CRendererOGL : public IRenderer
 {
 private:
 	// Pointer to an SDL_Surface - only set for the screen space renderer
-	SDL_Surface* m_pSurface;
+	SDL_Surface* m_pSurface = nullptr;
 
 	// System-wide values - initialised once by the screen space renderer
-	static unsigned c_idShaders;		// GLSL Program
-	static unsigned c_idBuffer;			// buffer id - can be shared by ALL sprites
+	static unsigned c_idShaders;				// GLSL Program
+	static unsigned c_idBuffer;					// buffer id - can be shared by ALL sprites
+
+	static unsigned c_idSubroutineTexture;
+	static unsigned c_idSubroutineTextureColorKey;
+	static unsigned c_idSubroutineColorSolid;
 
 	// OpenGL Texture Id & size
-	unsigned idTexture = 0;
+	unsigned m_idTexture = 0;
 	int m_nWidth = 0, m_nHeight = 0;
-	float rotate = 0.0f;
+	float m_fRotate = 0.0f;
+	bool m_bOwner = false;						// false for shared texture, true for owned
 
 	// Font-related data - SDL-based so not working
-	_TTF_Font* m_pFont;							// current font
+	_TTF_Font* m_pFont = nullptr;				// current font
 	std::string m_strFontFace = "arial.ttf";	// font face name
-	int m_nPtSize;								// font point size
-	CColor m_textColor;							// text color
+	int m_nPtSize = 18;							// font point size
+	CColor m_textColor;		// text color
+
+	// Color Key Data
+	bool m_bColorKey = false;
+	CColor m_colorKey;
 
 	// File Loader (path resolving and cached loading)
 	static CFileMgr<unsigned> c_filemgr;
@@ -63,33 +72,35 @@ public:
 
 
 	// Virtual Initialisers:
-	
-	// from another IRenderer - checks if they are of compatible type
-	void Create(IRenderer*) override;
 
-	// from a video mode initialisation
-	void Create(int width, int height, int depth, uint32_t flagsCreation) override;
+	// system-wide initialisation
+	void Initialise(int width, int height, int depth, uint32_t flagsCreation) override;
 
-	// from memory canvas
+	// clones another Renderer - checks if they are of compatible type. Produces a separate object
+	void Clone(IRenderer&) override;
+
+	// create from another Renderer - will use the same texture id
+	void Create(IRenderer&) override;
+
+	// craete from memory canvas
 	void Create(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) override;
-	// from memory canvas compatible with the current display
+	// craete from memory canvas compatible with the current display
 	void Create(int width, int height) override;
 
-	// from a loaded bitmap
+	// craete from a loaded bitmap
 	void Create(std::string sFileName) override;
-
 
 	// Rectangular Fragment
 	// Creates a renderer attached to a rectangular fragment of another image.
-	void Create(IRenderer*, CRectangle rect) override;
+	void Create(std::shared_ptr<IRenderer>, CRectangle) override;
 	void Create(std::string sFileName, CRectangle rect) override;
-	
+
 
 	// Tiled Fragment
 	// Creates a renderer attached to a rectangular fragment of another image.
 	// The image is considered to be divided into numCols x numRows regular rectangular tiles,
 	// of which the one is taken iCol's column and iRow's row
-	void Create(IRenderer*, short numCols, short numRows, short iCol, short iRow) override;
+	void Create(std::shared_ptr<IRenderer>, short numCols, short numRows, short iCol, short iRow) override;
 	void Create(std::string sFileName, short numCols, short numRows, short iCol, short iRow) override;
 
 
@@ -113,7 +124,7 @@ public:
 	static std::string FindPathStr(std::string filename);
 
 	// Rotozoom: create a clone object, rotated and zoomed
-	CRendererOGL* CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true) override;
+	std::shared_ptr<IRenderer> CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true) override;
 
 	// Width & Height
 	int GetWidth() override;
@@ -123,7 +134,7 @@ public:
 	CColor MatchColor(CColor color) override;				// Match color with the closest
 
 	// Color Key (Trasnparent Color)
-	void SetColorKey(CColor& color) override;
+	void SetColorKey(CColor color) override;
 	bool IsColorKeySet() override;
 	CColor GetColorKey() override;
 	void ClearColorKey() override;
@@ -132,7 +143,7 @@ public:
 	// Collision with another renderer based object object - with pixel precision
 	// nSkip skips pixels between test, high values increase efficiency but decrease accuracy, 1 for maximum accuracy, 0 to switch pixel precision off
 	// Based on SDL_Collide by genjix & robloach (http://sdl-collide.sourceforge.net/)
-	bool HitTest(int ax, int ay, IRenderer*, int bx, int by, int nSkip = 4) override;
+	bool HitTest(int ax, int ay, std::shared_ptr<IRenderer>, int bx, int by, int nSkip = 4) override;
 
 	// Flip Function
 	void Flip() override;
@@ -180,10 +191,10 @@ public:
 	int GetFontSize() override;
 	void GetFontSize(int& size, int& height, int& width, int& ascent, int& descent, int& leading, int& baseline) override;
 
-	IRenderer* GetTextGraphics(std::string pText) override;
-	IRenderer* GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText) override;
+	std::shared_ptr<IRenderer> GetTextGraphics(std::string pText) override;
+	std::shared_ptr<IRenderer> GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText) override;
 private:
-	IRenderer* CRendererOGL::GetTextGraphics(void* pFont, CColor textColor, std::string pText);
+	std::shared_ptr<IRenderer> CRendererOGL::GetTextGraphics(void* pFont, CColor textColor, std::string pText);
 };
 
 #endif

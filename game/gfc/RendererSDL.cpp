@@ -65,10 +65,9 @@ CRendererSDL::CRendererSDL() : IRenderer()
 }
 
 // copy constructor
-CRendererSDL::CRendererSDL(CRendererSDL& g) : IRenderer()
+CRendererSDL::CRendererSDL(CRendererSDL& renderer) : IRenderer()
 {
-	SDL_Surface* pSurface = static_cast<SDL_Surface*>(g.GetSurface());
-	m_pSurface = pSurface ? SDL_ConvertSurface(pSurface, pSurface->format, pSurface->flags) : NULL;
+	Clone(renderer);
 }
 
 CRendererSDL::~CRendererSDL()
@@ -83,26 +82,32 @@ CRendererSDL::~CRendererSDL()
 /////////////////////////////////////////////////////////
 // Virtual Initialisers
 
-// Clone - from another IRenderer which should be of the same type
-void CRendererSDL::Create(IRenderer* pRenderer)
+// System-wide initialisation
+void CRendererSDL::Initialise(int width, int height, int depth, uint32_t flagsCreation)
 {
-	if (pRenderer && pRenderer->GetSurface() && GetType() == pRenderer->GetType())
+	m_pSurface = SDL_SetVideoMode(width, height, depth, flagsCreation);
+}
+
+// Clone another Renderer
+void CRendererSDL::Clone(IRenderer& renderer)
+{
+	if (renderer.GetSurface() && GetType() == renderer.GetType())
 	{
-		SDL_Surface* pSurface = static_cast<SDL_Surface*>(pRenderer->GetSurface());
+		SDL_Surface* pSurface = static_cast<SDL_Surface*>(renderer.GetSurface());
 		m_pSurface = SDL_ConvertSurface(pSurface, pSurface->format, pSurface->flags);
 	}
 	else
 		m_pSurface = NoImage();
 }
 
-// from a video mode initialisation
-void CRendererSDL::Create(int width, int height, int depth, uint32_t flagsCreation)
+// Create from another Renderer - identical to Clone
+void CRendererSDL::Create(IRenderer& renderer)
 {
-	m_pSurface = SDL_SetVideoMode(width, height, depth, flagsCreation);
+	Clone(renderer);
+	//m_pSurface = static_cast<SDL_Surface*>(renderer.GetSurface());
 }
 
-
-// memory canvas
+// Create from memory canvas
 void CRendererSDL::Create(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
 {
 	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, depth, Rmask, Gmask, Bmask, Amask);
@@ -119,14 +124,14 @@ void CRendererSDL::Create(int width, int height, int depth, uint32_t Rmask, uint
 			return &stdformat;
 	}
 
-
+// Create from memory canvas compatible with the current display
 void CRendererSDL::Create(int width, int height)
 {
 	SDL_PixelFormat* pVideoFormat = _getVideoSurfaceFormat();
 	m_pSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height, pVideoFormat->BitsPerPixel, pVideoFormat->Rmask, pVideoFormat->Gmask, pVideoFormat->Bmask, pVideoFormat->Amask);
 }
 
-// from a loaded bitmap
+// Create from a loaded bitmap
 void CRendererSDL::Create(string sFileName)
 {
 	SDL_Surface *pSurface = c_filemgr.Load(sFileName);
@@ -146,7 +151,7 @@ void CRendererSDL::Create(string sFileName)
 }
 
 // Rectangular Fragment
-void CRendererSDL::Create(IRenderer *pRenderer, CRectangle rect)
+void CRendererSDL::Create(shared_ptr<IRenderer> pRenderer, CRectangle rect)
 {
 	if (pRenderer && pRenderer->GetSurface() && GetType() == pRenderer->GetType())
 	{
@@ -173,7 +178,7 @@ void CRendererSDL::Create(string sFileName, CRectangle rect)
 }
 
 // Tiled Fragment
-void CRendererSDL::Create(IRenderer *pRenderer, short numCols, short numRows, short iCol, short iRow)
+void CRendererSDL::Create(shared_ptr<IRenderer> pRenderer, short numCols, short numRows, short iCol, short iRow)
 {
 	if (pRenderer && pRenderer->GetSurface() && GetType() == pRenderer->GetType())
 	{
@@ -235,12 +240,12 @@ bool CRendererSDL::HasPixels()
 /////////////////////////////////////////////////////////
 // Static functions for standard path finding
 
-void CRendererSDL::SetDefaultFilePath(std::string new_path) 
+void CRendererSDL::SetDefaultFilePath(string new_path) 
 { 
 	c_filemgr.SetPathString(new_path); 
 }
 
-std::string CRendererSDL::FindPathStr(std::string filename)
+string CRendererSDL::FindPathStr(string filename)
 {
 	return c_filemgr.FindPathStr(filename);
 }
@@ -248,7 +253,7 @@ std::string CRendererSDL::FindPathStr(std::string filename)
 /////////////////////////////////////////////////////////
 // RotoZoom: create a clone object, rotated and zoomed
 
-CRendererSDL* CRendererSDL::CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth)
+shared_ptr<IRenderer> CRendererSDL::CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth)
 {
 	if (!m_pSurface) return NULL;
 
@@ -265,7 +270,7 @@ CRendererSDL* CRendererSDL::CreateRotozoom(double angle, double zoomx, double zo
 		SDL_FreeSurface(pZoom);
 	}
 
-	CRendererSDL* p = new CRendererSDL();
+	auto p = make_shared<CRendererSDL>();
 	p->CreateFromSurface(pRotoZoom);
 
 	return p;
@@ -304,21 +309,23 @@ CColor CRendererSDL::MatchColor(CColor color)
 /////////////////////////////////////////////////////////
 // Color Key (Trasnparent Color)
 
-void CRendererSDL::SetColorKey(CColor& color)
+void CRendererSDL::SetColorKey(CColor color)
 {
 	if (!m_pSurface) return;
+	m_bColorKey = true;
+	m_colorKey = color;
 	uint32_t col = SDL_MapRGBA(m_pSurface->format, color.R(), color.G(), color.B(), color.A());
 	SDL_SetColorKey(m_pSurface, SDL_SRCCOLORKEY, col);
 }
 
 bool CRendererSDL::IsColorKeySet()
 {
-	return m_pSurface && ((m_pSurface->flags & SDL_SRCCOLORKEY) != 0);
+	return m_bColorKey;
 }
 
 CColor CRendererSDL::GetColorKey()
 {
-	if (!m_pSurface) return CColor::Black();
+	if (!m_bColorKey) return CColor::Black();
 
 	uint32_t col = m_pSurface->format->colorkey;
 	CColor color;
@@ -328,13 +335,15 @@ CColor CRendererSDL::GetColorKey()
 
 void CRendererSDL::ClearColorKey()
 {
+	m_bColorKey = false;
+	m_colorKey = CColor::Black();
 	if (m_pSurface) SDL_SetColorKey(m_pSurface, 0, 0);
 }
 
 /////////////////////////////////////////////////////////
 // Pixel collision function
 
-bool CRendererSDL::HitTest(int ax, int ay, IRenderer* pOther, int bx, int by, int nSkip)
+bool CRendererSDL::HitTest(int ax, int ay, shared_ptr<IRenderer> pOther, int bx, int by, int nSkip)
 {
 	if (!m_pSurface || !pOther || !pOther->GetSurface()) return false;
 	SDL_Surface* pOtherSurface = static_cast<SDL_Surface*>(pOther->GetSurface());
@@ -545,7 +554,7 @@ void CRendererSDL::DrawBezierLine(CVectorI pts[], uint16_t num, uint16_t nSteps,
 /////////////////////////////////////////////////////////
 // Text Drawing Functions
 
-bool CRendererSDL::SetFont(std::string fontFace, int nPtSize)
+bool CRendererSDL::SetFont(string fontFace, int nPtSize)
 {
 	m_strFontFace = fontFace;
 	if (nPtSize != 0) m_nPtSize = nPtSize;
@@ -564,7 +573,7 @@ bool CRendererSDL::SetFont(int nPtSize)
 	return m_pFont != NULL;
 }
 
-std::string CRendererSDL::GetFontFace()
+string CRendererSDL::GetFontFace()
 {
 	return m_strFontFace;
 }
@@ -585,14 +594,14 @@ void CRendererSDL::GetFontSize(int& size, int& height, int& width, int& ascent, 
 	baseline = leading - height - descent;
 }
 
-IRenderer* CRendererSDL::GetTextGraphics(std::string pText)
+shared_ptr<IRenderer> CRendererSDL::GetTextGraphics(string pText)
 {
 	if (!m_pFont)
 		SetFont(0);
-	return GetTextGraphics(m_pFont, m_textColor, pText);
+	return GetTextGraphics(m_pFont, m_colorText, pText);
 }
 
-IRenderer* CRendererSDL::GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText)
+shared_ptr<IRenderer> CRendererSDL::GetTextGraphics(string fontFace, int nPtSize, CColor color, string pText)
 {
 	if (nPtSize == 0) nPtSize = m_nPtSize;
 	if (m_nPtSize == 0) nPtSize = 18;
@@ -600,11 +609,11 @@ IRenderer* CRendererSDL::GetTextGraphics(std::string fontFace, int nPtSize, CCol
 }
 
 
-IRenderer* CRendererSDL::GetTextGraphics(void* pFont, CColor textColor, std::string pText)
+shared_ptr<IRenderer> CRendererSDL::GetTextGraphics(void* pFont, CColor textColor, string pText)
 {
 	if (!pFont) return NULL;
 	SDL_Surface* pSurface = TTF_RenderText_Blended(static_cast<_TTF_Font*>(pFont), pText.c_str(), *(SDL_Color*)&textColor.r);
-	CRendererSDL* pRenderer = new CRendererSDL();
+	auto pRenderer = make_shared<CRendererSDL>();
 	pRenderer->CreateFromSurface(pSurface);
 	return pRenderer;
 }

@@ -38,6 +38,7 @@ public:
 	// colorKey    - sets colour key (alpha or transparent colour)
 	// time	- current game time
 
+public:
 	CSprite();
 
 	CSprite(CVector v, float w, float h, uint32_t time);
@@ -72,58 +73,56 @@ public:
 	// Attributes
 
 private:
-	void _local_init(float x, float y, float w, float h, uint32_t time);		// constructor helper function
-
 	// Position & Size
-	CVector m_pos;			// position of the pivot point of the sprite 
-	CVector m_pt1;			// coordinates of the bottom-left corner relative to the pivot point
-	CVector m_pt2;			// coordinates of the top-right corner relative to the pivot point
+	CVector m_pos;					// position of the pivot point of the sprite 
+	CVector m_pt1;					// coordinates of the bottom-left corner relative to the pivot point
+	CVector m_pt2;					// coordinates of the top-right corner relative to the pivot point
 
 	// Drawing State
-	bool m_bValid;			// if set to false then re-draw is needed
+	bool m_bValid = false;			// if set to false then re-draw is needed
 
 	// Properties
 	std::map<std::string, PROPERTY> m_properties;
 
 	// Time
-	uint32_t m_time;		// reference time
+	uint32_t m_time = 0;			// reference time
 	
 	// Internal State (User-Defined)
-	int32_t m_state;		// state (user defined)
-	float m_health;			// additional state (health?)
+	int32_t m_state = 0;			// state (user defined)
+	float m_health = 0.f;			// additional state (health?)
 
 	// Animation Phases
-	CGraphics **m_pFrames;	// animation frames (pointers to CGraphics bitmaps)
-	int m_nFrames;			// number of animation frames
-	int m_nCurFrame;		// last (current) frame played
-	int m_nFramePeriod;		// period of a single animation frame [msec]
-	long m_nFrameTime;		// reference time for animation: current frame index = ((GetTime() - m_nFrameTime) / m_nFramePeriod) % m_nFrames
-	bool m_bFrameChangeSize;// if true, changes the sprite's size accordingly to the size of frame bitmap
-	std::string m_strAnimName;	// amimation (propert) name
+	CGraphics **m_pFrames = nullptr;// animation frames (pointers to CGraphics bitmaps)
+	int m_nFrames = 0;				// number of animation frames
+	int m_nCurFrame = 0;			// last (current) frame played
+	int m_nFramePeriod = 0;			// period of a single animation frame [msec]
+	long m_nFrameTime = 0;			// reference time for animation: current frame index = ((GetTime() - m_nFrameTime) / m_nFramePeriod) % m_nFrames
+	bool m_bFrameChangeSize = false;// if true, changes the sprite's size accordingly to the size of frame bitmap
+	std::string m_strAnimName;		// amimation (propert) name
 	
 	// Dynamics - Linear
-	CVector m_v;			// normalised velocity (direction)
-	float m_fv;				// speed (scalar)
+	CVector m_v = CVector(0, 1);	// normalised velocity (direction)
+	float m_fv = 0.f;				// speed (scalar)
 	
-	float m_m;				// mass
+	float m_m = 0.0f;				// mass
 
 	// Dynamics - Rotational
-	float m_rot;			// rotation
-	float m_sinrot;			// rotation sin
-	float m_cosrot;			// rotation cos
-	float m_omega;			// rotational speed
+	float m_rot = 0;				// rotation
+	float m_sinrot = 0;				// rotation sin
+	float m_cosrot = 1;				// rotation cos
+	float m_omega = 0;				// rotational speed
 
 	// Deleted flag
-	bool m_bDeleted;
+	bool m_bDeleted = false;
 
 	// Death time
-	uint32_t m_timeDeath;	// if not ZERO - will be automatically deleted after that time
+	uint32_t m_timeDeath = 0;		// if not ZERO - will be automatically deleted after that time
 
 	struct SHEET;
 
 protected:
-	CGraphics *m_pGraphics;	// graphics cache (no rotation)
-	CGraphics *m_pRoto;		// graphics cache (for rotated image)
+	CGraphics *m_pGraphics = nullptr;	// graphics cache (no rotation)
+	CGraphics *m_pRoto = nullptr;		// graphics cache (for rotated image)
 
 public:
 
@@ -257,26 +256,26 @@ public:
 	void LoadImage(CGraphics *p, char *pAliasName)													{ SetProperty(pAliasName, &CGraphics(p)); }
 	void LoadImage(char *pFileName, char *pAliasName)												{ SetProperty(pAliasName, &CGraphics(pFileName)); }
 	void LoadImage(char *pFileName)																	{ LoadImage(pFileName, pFileName); }
-	//void LoadImage(CGraphics *p, char *pAliasName, CColor colorKey)									{ SetProperty(pAliasName, &CGraphics(p, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, CColor colorKey)									{ SetProperty(pAliasName, &CGraphics(p, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, CColor colorKey)								{ SetProperty(pAliasName, &CGraphics(pFileName, colorKey)); }
 	void LoadImage(char *pFileName, CColor colorKey)												{ LoadImage(pFileName, pFileName, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex)										{ SetProperty(pAliasName, nIndex, &CGraphics(p)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex)									{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName)); }
 	void LoadImage(char *pFileName, int nIndex)														{ LoadImage(pFileName, pFileName, nIndex); }
-	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CColor colorKey)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CColor colorKey)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CColor colorKey)					{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, CColor colorKey)									{ LoadImage(pFileName, pFileName, nIndex, colorKey); }
 
 	void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect)									{ SetProperty(pAliasName, &CGraphics(p, rect)); }
 	void LoadImage(char *pFileName, char *pAliasName, CRectangle rect)								{ SetProperty(pAliasName, &CGraphics(pFileName, rect)); }
 	void LoadImage(char *pFileName, CRectangle rect)												{ LoadImage(pFileName, pFileName, rect); }
-	//void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, CRectangle rect, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(pFileName, rect, colorKey)); }
 	void LoadImage(char *pFileName, CRectangle rect, CColor colorKey)								{ LoadImage(pFileName, pFileName, rect, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CRectangle rect)					{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, rect)); }
 	void LoadImage(char *pFileName, int nIndex, CRectangle rect)									{ LoadImage(pFileName, pFileName, nIndex, rect); }
-	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(p, rect, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, CRectangle rect, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, rect, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, CRectangle rect, CColor colorKey)					{ LoadImage(pFileName, pFileName, nIndex, rect, colorKey); }
 
@@ -285,26 +284,26 @@ public:
 	void LoadImage(CGraphics *p, char *pAliasName, SHEET s)											{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, char *pAliasName, SHEET s)										{ SetProperty(pAliasName, &CGraphics(pFileName, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, SHEET s)														{ LoadImage(pFileName, pFileName, _DECODE_SHEET); }
-	//void LoadImage(CGraphics *p, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(p, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, SHEET s, CColor colorKey)						{ SetProperty(pAliasName, &CGraphics(pFileName, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, SHEET s, CColor colorKey)										{ LoadImage(pFileName, pFileName, _DECODE_SHEET, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s)								{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, SHEET s)							{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, _DECODE_SHEET)); }
 	void LoadImage(char *pFileName, int nIndex, SHEET s)											{ LoadImage(pFileName, pFileName, nIndex, _DECODE_SHEET); }
-	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(p, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, SHEET s, CColor colorKey)			{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, _DECODE_SHEET, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, SHEET s, CColor colorKey)							{ LoadImage(pFileName, pFileName, nIndex, _DECODE_SHEET, colorKey); }
 
 	void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow)									{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow)									{ SetProperty(pAliasName, &CGraphics(pFileName, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, short numCols, short numRows, short iCol, short iRow)													{ LoadImage(pFileName, pFileName, numCols, numRows, iCol, iRow); }
-	//void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ SetProperty(pAliasName, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)				{ SetProperty(pAliasName, &CGraphics(pFileName, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)									{ LoadImage(pFileName, pFileName, numCols, numRows, iCol, iRow, colorKey); }
 	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow)						{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow)						{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, numCols, numRows, iCol, iRow)); }
 	void LoadImage(char *pFileName, int nIndex, short numCols, short numRows, short iCol, short iRow)										{ LoadImage(pFileName, pFileName, nIndex, numCols, numRows, iCol, iRow); }
-	//void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)		{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
+	void LoadImage(CGraphics *p, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)		{ SetProperty(pAliasName, nIndex, &CGraphics(p, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, char *pAliasName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ SetProperty(pAliasName, nIndex, &CGraphics(pFileName, numCols, numRows, iCol, iRow, colorKey)); }
 	void LoadImage(char *pFileName, int nIndex, short numCols, short numRows, short iCol, short iRow, CColor colorKey)						{ LoadImage(pFileName, pFileName, nIndex, numCols, numRows, iCol, iRow, colorKey); }
 
@@ -315,7 +314,7 @@ public:
 	void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid);
 	void LoadAnimation(char *pFileName, char *pAliasName, SHEET grid);
 	void LoadAnimation(char *pFileName, SHEET grid) { LoadAnimation(pFileName, pFileName, grid); }
-	//void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey);
+	void LoadAnimation(CGraphics *p, char *pAliasName, SHEET grid, CColor colorKey);
 	void LoadAnimation(char *pFileName, char *pAliasName, SHEET grid, CColor colorKey);
 	void LoadAnimation(char *pFileName, SHEET grid, CColor colorKey) { LoadAnimation(pFileName, pFileName, grid, colorKey); }
 
@@ -323,34 +322,35 @@ public:
 	void AddImage(CGraphics *p, char *pAliasName)																			{ AddProperty(pAliasName, &CGraphics(p)); }
 	void AddImage(char *pFileName, char *pAliasName)																		{ AddProperty(pAliasName, &CGraphics(pFileName)); }
 	void AddImage(char *pFileName)																							{ AddImage(pFileName, pFileName); }
-	//void AddImage(CGraphics *p, char *pAliasName, CColor colorKey)															{ AddProperty(pAliasName, &CGraphics(p, colorKey)); }
+	void AddImage(CGraphics *p, char *pAliasName, CColor colorKey)															{ AddProperty(pAliasName, &CGraphics(p, colorKey)); }
 	void AddImage(char *pFileName, char *pAliasName, CColor colorKey)														{ AddProperty(pAliasName, &CGraphics(pFileName, colorKey)); }
 	void AddImage(char *pFileName, CColor colorKey)																			{ AddImage(pFileName, pFileName, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, CRectangle rect)															{ AddProperty(pAliasName, &CGraphics(p, rect)); }
 	void AddImage(char *pFileName, char *pAliasName, CRectangle rect)														{ AddProperty(pAliasName, &CGraphics(pFileName, rect)); }
 	void AddImage(char *pFileName, CRectangle rect)																			{ AddImage(pFileName, pFileName, rect); }
-	//void AddImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)											{ AddProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
+	void AddImage(CGraphics *p, char *pAliasName, CRectangle rect, CColor colorKey)											{ AddProperty(pAliasName, &CGraphics(p, rect, colorKey)); }
 	void AddImage(char *pFileName, char *pAliasName, CRectangle rect, CColor colorKey)										{ AddProperty(pAliasName, &CGraphics(pFileName, rect, colorKey)); }
 	void AddImage(char *pFileName, CRectangle rect, CColor colorKey)														{ AddImage(pFileName, pFileName, rect, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow)						{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow); }
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow)					{ AddImage(pFileName, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow); }
 	void AddImage(char *pFileName, short numCols, short numRows, short iCol, short iRow)									{ AddImage(pFileName, pFileName, numCols, numRows, iCol, iRow); }
-	//void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
+	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(p, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)	{ AddImage(pFileName, pAliasName, numCols, numRows, iCol, iRow, iCol, iRow, colorKey); }
 	void AddImage(char *pFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey)					{ AddImage(pFileName, pFileName, numCols, numRows, iCol, iRow, colorKey); }
 
 	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true);
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true);
 	void AddImage(char *pFileName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, bool bHorizontally = true)						{ AddImage(pFileName, pFileName, numCols, numRows, iColFrom, iRowFrom, iColTo, iRowTo, bHorizontally); }
-	//void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
+	void AddImage(CGraphics *p, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
 	void AddImage(char *pFileName, char *pAliasName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true);
 	void AddImage(char *pFileName, short numCols, short numRows, short iColFrom, short iRowFrom, short iColTo, short iRowTo, CColor colorKey, bool bHorizontally = true) { AddImage(pFileName, pFileName, numCols, numRows, iColFrom, iRowFrom, iColTo, iRowTo, colorKey, bHorizontally); }
 
 	// Sets the current image from either a CGraphics object
 	// or a previously stored image identified by pAliasName
-	void SetImage(CGraphics *p, bool bChangeSize = true);
+	void SetImage(CGraphics* p, bool bChangeSize = true);
+	void SetImage(CGraphics* p, CColor colorKey, bool bChangeSize = true);
 	void SetImage(char *pImageName, bool bChangeSize = true)				{ SetImage((CGraphics*)GetProperty(pImageName), bChangeSize); }
 	void SetImage(char *pImageName, int nIndex, bool bChangeSize = true)	{ SetImage((CGraphics*)GetProperty(pImageName, nIndex), bChangeSize); }
 

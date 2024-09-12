@@ -28,7 +28,7 @@ jarek@kingston.ac.uk
 class EXT_DECL CGraphics
 {
 private:
-	IRenderer* m_pRenderer;					// renderer object associated
+	std::shared_ptr<IRenderer> m_pRenderer;	// renderer object associated
 	CVectorI m_vecScroll;					// scroll vector
 
 	// Fonts information
@@ -48,11 +48,14 @@ private:
 public:
 	// Constructors:
 
+	// default
+	CGraphics();
+
 	// from video mode initialisation
 	CGraphics(int width, int height, int depth, uint32_t flagsCreation);
 
-	// from a Renderer object (becomes an owner of the object)
-	CGraphics(IRenderer* pRenderer);
+	// from a Renderer object
+	CGraphics(std::shared_ptr<IRenderer>);
 
 	// memory canvas
 	CGraphics(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
@@ -69,14 +72,14 @@ public:
 
 	// copy from a pointer
 	CGraphics(CGraphics *p);
-	// CGraphics(CGraphics *p, CColor colorKey); -- no more available, regular constructor copies the color key if set
+	CGraphics(CGraphics *p, CColor colorKey);
 
 	// Rectangular Fragment
 	// Creates a CGraphics constructed of a rectangular fragment of another image.
 	CGraphics(CGraphics *p, CRectangle rect);
 	CGraphics(std::string sFileName, CRectangle rect);
+	CGraphics(CGraphics* p, CRectangle rect, CColor colorKey);
 	CGraphics(std::string sFileName, CRectangle rect, CColor colorKey);
-	// CGraphics(CGraphics *p, CRectangle rect, CColor colorKey); -- no more available, regular constructor copies the color key if set
 
 	// Tiled Fragment
 	// Creates a CGraphics constructed of a rectangular fragment of another image.
@@ -84,8 +87,8 @@ public:
 	// of which the one is taken iCol's column and iRow's row
 	CGraphics(CGraphics *p, short numCols, short numRows, short iCol, short iRow);
 	CGraphics(std::string sFileName, short numCols, short numRows, short iCol, short iRow);
+	CGraphics(CGraphics* p, short numCols, short numRows, short iCol, short iRow, CColor colorKey);
 	CGraphics(std::string sFileName, short numCols, short numRows, short iCol, short iRow, CColor colorKey);
-	// CGraphics(CGraphics* p, short numCols, short numRows, short iCol, short iRow, CColor colorKey); -- no more available, regular constructor copies the color key if set
 
 	// destructor
 	virtual ~CGraphics();
@@ -94,8 +97,8 @@ public:
 	CGraphics* CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true);
 
 	// Renderer object Getters, Setters, and Testers
-	void SetRenderer(IRenderer* pRenderer)			{ if (m_pRenderer) delete m_pRenderer;  m_pRenderer = pRenderer; }
-	IRenderer* GetRenderer()						{ return m_pRenderer; }
+	void SetRenderer(std::shared_ptr<IRenderer> p)	{ m_pRenderer = p; }
+	std::shared_ptr<IRenderer> GetRenderer()		{ return m_pRenderer; }
 
 	// valid graphical surface?
 	bool HasPixels()								{ return m_pRenderer ? m_pRenderer->HasPixels() : false; }
@@ -125,7 +128,7 @@ public:
 	// Collision with another CGraphics object - with pixel precision
 	// nSkip skips pixels between test, high values increase efficiency but decrease accuracy, 1 for maximum accuracy, 0 to switch pixel precision off
 	// Based on SDL_Collide by genjix & robloach (http://sdl-collide.sourceforge.net/)
-	bool HitTest(int ax, int ay, CGraphics *pOther, int bx, int by, int nSkip = 4)
+	bool HitTest(int ax, int ay, CGraphics* pOther, int bx, int by, int nSkip = 4)
 	{
 		return m_pRenderer ? m_pRenderer->HitTest(ax, ay, pOther->GetRenderer(), bx, by, nSkip) : false;
 	}

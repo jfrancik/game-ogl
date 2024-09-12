@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "MyGame.h"
 
-CMyGame::CMyGame(void) 
+CMyGame::CMyGame(void)  :
+	m_back("back.jpg"),
+	m_rocket(CVector(50, 0), "rocket.bmp", CColor::Blue(), 0)
+
 	//m_sprite(400, 40, "rocket.bmp", CColor::Blue(), 0)	
 	// to initialise more sprites here use a comma-separated list
 {
@@ -10,9 +13,6 @@ CMyGame::CMyGame(void)
 
 CMyGame::~CMyGame(void)
 {
-	auto blob = m_blobs.begin();
-	auto pos = m_blobPos.begin();
-
 	for (auto blob : m_blobs)
 		delete blob;
 }
@@ -33,15 +33,13 @@ void CMyGame::OnDraw(CGraphics* g)
 	// TODO: add drawing code here
 	//m_sprite.Draw(g);	// this will draw the sample rocket sprite
 
-	g->Blit(CVector(0, 0), *m_pBack);
-	g->Blit(m_pos, *m_pRocket);
+	g->Blit(CVector(0, 0), m_back);
 	g->Blit(CVector(0, 0), *m_pRocket2);
 
-	auto blob = m_blobs.begin();
-	auto pos = m_blobPos.begin();
+	m_rocket.Draw(g);
 
-	for (; blob != m_blobs.end(); blob++, pos++)
-		g->Blit(*pos, **blob);
+	for (auto blob : m_blobs)
+		blob->Draw(g);
 }
 
 /////////////////////////////////////////////////////
@@ -50,8 +48,6 @@ void CMyGame::OnDraw(CGraphics* g)
 // one time initialisation
 void CMyGame::OnInitialize()
 {
-	m_pBack = new CGraphics("back.jpg");
-	m_pRocket = new CGraphics("rocket.bmp", CColor::Blue());
 	m_pRocket2 = new CGraphics("rocket.bmp", CColor::Blue());
 }
 
@@ -110,7 +106,7 @@ void CMyGame::OnMouseMove(Uint16 x,Uint16 y,Sint16 relx,Sint16 rely,bool bLeft,b
 
 void CMyGame::OnLButtonDown(Uint16 x,Uint16 y)
 {
-	m_pos = CVector(x, y);
+	m_rocket.SetPos(x, y);
 }
 
 void CMyGame::OnLButtonUp(Uint16 x,Uint16 y)
@@ -119,8 +115,7 @@ void CMyGame::OnLButtonUp(Uint16 x,Uint16 y)
 
 void CMyGame::OnRButtonDown(Uint16 x,Uint16 y)
 {
-	m_blobs.push_back(new CGraphics("goo.png"));
-	m_blobPos.push_back(CVector(x, y));
+	m_blobs.push_back(new CSprite(CVector(x, y), "goo.png", GetTime()));
 }
 
 void CMyGame::OnRButtonUp(Uint16 x,Uint16 y)

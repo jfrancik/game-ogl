@@ -25,13 +25,18 @@ jarek@kingston.ac.uk
 // Any change to this value require a rebuild of the GFC.DLL module
 #define DEFAULT_RENDERER "OGL"
 
-void RegisterRenderers();
-
 // CRendererSDL class
 class EXT_DECL CRendererFactory 
 {
 public:
-    using RendererCreator = std::function<IRenderer* ()>;
+    // Function constructing a renderer of the given class - registered by the renderer module
+    // should call the simplest possible constructor
+    using RendererConstructor = std::function<std::shared_ptr<IRenderer> ()>;
+
+    // procedure to initialises a renderer once constructed - called by the client typicallt using one of the Create function
+    // The factory will decide wheter to execute immediately or in a delayed mode 
+    // (the latter will be applied for early creation of static objects)
+    using RendererCreator = std::function<void (std::shared_ptr<IRenderer>)>;
 
     static CRendererFactory& Instance()
     {
@@ -39,46 +44,80 @@ public:
         return factory;
     }
 
-    void Register(const std::string& type, RendererCreator creator)
+    static void Register(const std::string& type, RendererConstructor creator)
     {
-        creators[type] = creator;
+        Instance().m_constructors[type] = creator;
     }
 
-    void SetDefault(const std::string& type)
+    static void SetDefault(const std::string& type)
     {
-        auto it = creators.find(type);
-        if (it != creators.end())
-            m_pDefault = it->second;
+        auto it = Instance().m_constructors.find(type);
+        if (it != Instance().m_constructors.end())
+            Instance().m_pDefault = it->second;
     }
 
-    IRenderer* Create() {
-        if (creators.size() == 0)
+    //IRenderer* Create() {
+    //    if (constructors.size() == 0)
+    //        RegisterRenderers();
+
+    //    if (m_pDefault)
+    //        return m_pDefault();
+    //    else
+    //        return nullptr;
+    //}
+
+    static std::shared_ptr<IRenderer> Create(RendererCreator proc, bool bInitialise = false)
+    {
+        if (Instance().m_constructors.size() == 0)
             RegisterRenderers();
-
-        if (m_pDefault)
-            return m_pDefault();
-        else
+        
+        if (!Instance().m_pDefault)
             return nullptr;
+
+        std::shared_ptr<IRenderer> pRenderer = Instance().m_pDefault();
+
+        if (Instance().m_bInitialised)
+            proc(pRenderer);
+        else
+            if (bInitialise)
+                Instance().m_creators.push_front(std::pair<RendererCreator, std::shared_ptr<IRenderer> >(proc, pRenderer));
+            else
+                Instance().m_creators.push_back(std::pair<RendererCreator, std::shared_ptr<IRenderer> >(proc, pRenderer));
+
+        if (bInitialise)
+        {
+            for (auto pair : Instance().m_creators)
+                pair.first(pair.second);
+
+            Instance().m_bInitialised = true;
+        }
+            
+        return pRenderer;
     }
 
-    IRenderer* Create(const std::string& type) {
-        if (creators.size() == 0)
-            RegisterRenderers();
+    static void RegisterRenderers();
 
-        auto it = creators.find(type);
-        if (it != creators.end())
-            return it->second();
-        else
-            return nullptr;
-    }
+    //IRenderer* Create(const std::string& type) {
+    //    if (constructors.size() == 0)
+    //        RegisterRenderers();
+
+    //    auto it = constructors.find(type);
+    //    if (it != constructors.end())
+    //        return it->second();
+    //    else
+    //        return nullptr;
+    //}
 
 private:
     CRendererFactory() { }
 
+    bool m_bInitialised = false;
+
 #pragma warning(push)
 #pragma warning(disable: 4251)
-    std::unordered_map<std::string, RendererCreator> creators;
-    RendererCreator m_pDefault = NULL;
+    std::unordered_map<std::string, RendererConstructor> m_constructors;
+    std::list<std::pair<RendererCreator, std::shared_ptr<IRenderer> > > m_creators;
+    RendererConstructor m_pDefault = NULL;
 #pragma warning(pop)
 
 };

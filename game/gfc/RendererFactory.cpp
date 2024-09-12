@@ -17,14 +17,14 @@ jarek@kingston.ac.uk
 #include "RendererSDL.h"
 #include "RendererOGL.h"
 
-void RegisterRenderers()
+void CRendererFactory::RegisterRenderers()
 {
-    CRendererFactory::Instance().Register("SDL", [] {
-        return new CRendererSDL();
+    CRendererFactory::Register("SDL", [] {
+        return std::make_shared<CRendererSDL>();
         });
-    CRendererFactory::Instance().Register("OGL", [] {
-        return new CRendererOGL();
+    CRendererFactory::Register("OGL", [] {
+        return std::make_shared<CRendererOGL>();
         });
 
-    CRendererFactory::Instance().SetDefault(DEFAULT_RENDERER);
+    CRendererFactory::SetDefault(DEFAULT_RENDERER);
 }

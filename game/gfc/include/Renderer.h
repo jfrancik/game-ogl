@@ -36,24 +36,27 @@ public:
 
 	// Virtual Initialisers:
 	
-	// from another IRenderer - checks if they are of compatible type
-	virtual void Create(IRenderer*) = 0;
+	// system-wide initialisation
+	virtual void Initialise(int width, int height, int depth, uint32_t flagsCreation) = 0;
 
-	// from a video mode initialisation
-	virtual void Create(int width, int height, int depth, uint32_t flagsCreation) = 0;
+	// clones another Renderer - checks if they are of compatible type. Produces a separate object
+	virtual void Clone(IRenderer&) = 0;
 
-	// from memory canvas
+	// create from another Renderer - checks if they are of compatible type.
+	// May be identical to Clone, or share the same underlying object - imlementation dependent.
+	virtual void Create(IRenderer&) = 0;
+
+	// craete from memory canvas
 	virtual void Create(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = 0;
-	// from memory canvas compatible with the current display
+	// craete from memory canvas compatible with the current display
 	virtual void Create(int width, int height) = 0;
 
-	// from a loaded bitmap
+	// craete from a loaded bitmap
 	virtual void Create(std::string sFileName) = 0;
-
 
 	// Rectangular Fragment
 	// Creates a renderer attached to a rectangular fragment of another image.
-	virtual void Create(IRenderer*p, CRectangle rect) = 0;
+	virtual void Create(std::shared_ptr<IRenderer>, CRectangle) = 0;
 	virtual void Create(std::string sFileName, CRectangle rect) = 0;
 	
 
@@ -61,7 +64,7 @@ public:
 	// Creates a renderer attached to a rectangular fragment of another image.
 	// The image is considered to be divided into numCols x numRows regular rectangular tiles,
 	// of which the one is taken iCol's column and iRow's row
-	virtual void Create(IRenderer*p, short numCols, short numRows, short iCol, short iRow) = 0;
+	virtual void Create(std::shared_ptr<IRenderer>, short numCols, short numRows, short iCol, short iRow) = 0;
 	virtual void Create(std::string sFileName, short numCols, short numRows, short iCol, short iRow) = 0;
 
 
@@ -78,7 +81,7 @@ public:
 //	static void SetDefaultFilePath(std::string new_path);
 
 	// Rotozoom: create a clone object, rotated and zoomed
-	virtual IRenderer* CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true) = 0;
+	virtual std::shared_ptr<IRenderer> CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth = true) = 0;
 
 
 	// Width & Height
@@ -89,7 +92,7 @@ public:
 	virtual CColor MatchColor(CColor color) = 0;				// Match color with the closest
 
 	// Color Key (Trasnparent Color)
-	virtual void SetColorKey(CColor& color) = 0;
+	virtual void SetColorKey(CColor color) = 0;
 	virtual bool IsColorKeySet() = 0;
 	virtual CColor GetColorKey() = 0;
 	virtual void ClearColorKey() = 0;
@@ -98,7 +101,7 @@ public:
 	// Collision with another renderer based object object - with pixel precision
 	// nSkip skips pixels between test, high values increase efficiency but decrease accuracy, 1 for maximum accuracy, 0 to switch pixel precision off
 	// Based on SDL_Collide by genjix & robloach (http://sdl-collide.sourceforge.net/)
-	virtual bool HitTest(int ax, int ay, IRenderer*, int bx, int by, int nSkip = 4) = 0;
+	virtual bool HitTest(int ax, int ay, std::shared_ptr<IRenderer>, int bx, int by, int nSkip = 4) = 0;
 
 	// Flip Function
 	virtual void Flip() = 0;
@@ -146,8 +149,8 @@ public:
 	virtual int GetFontSize() = 0;
 	virtual void GetFontSize(int& size, int& height, int& width, int& ascent, int& descent, int& leading, int& baseline) = 0;
 
-	virtual IRenderer* GetTextGraphics(std::string pText) = 0;
-	virtual IRenderer* GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText) = 0;
+	virtual std::shared_ptr<IRenderer> GetTextGraphics(std::string pText) = 0;
+	virtual std::shared_ptr<IRenderer> GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText) = 0;
 };
 
 #endif

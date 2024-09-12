@@ -4,12 +4,10 @@ class CMyGame : public CGame
 {
 	// Define sprites and other instance variables here
 	//CSprite m_sprite;	// Sample sprite
-	CGraphics *m_pRocket, *m_pRocket2, *m_pBack;	// Sample images
-	std::list<CGraphics*> m_blobs;					// Even more sample images
-	std::list<CVector> m_blobPos;
+	CGraphics m_back, *m_pRocket2;
+	CSprite m_rocket;
+	CSpriteList m_blobs;							// Even more sample images
 	
-	CVector m_pos = CVector(0, 0);
-
 public:
 	CMyGame(void);
 	~CMyGame(void);

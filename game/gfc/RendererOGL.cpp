@@ -37,11 +37,12 @@ using namespace std;
 
 unsigned CRendererOGL::c_idShaders = 0;
 unsigned CRendererOGL::c_idBuffer = 0;
+unsigned CRendererOGL::c_idSubroutineTexture = 0;
+unsigned CRendererOGL::c_idSubroutineTextureColorKey = 0;
+unsigned CRendererOGL::c_idSubroutineColorSolid = 0;
 
 
-extern unsigned char NO_IMAGE[];
 SDL_Surface* NoImage();
-
 
 CFileMgr<unsigned> CRendererOGL::c_filemgr("%;%images\\;.\\;images\\",
 	[](string filename)
@@ -101,8 +102,9 @@ CRendererOGL::CRendererOGL() : IRenderer()
 }
 
 // copy constructor
-CRendererOGL::CRendererOGL(CRendererOGL& g) : IRenderer()
+CRendererOGL::CRendererOGL(CRendererOGL& renderer) : IRenderer()
 {
+	Clone(renderer);
 }
 
 CRendererOGL::~CRendererOGL()
@@ -117,13 +119,8 @@ CRendererOGL::~CRendererOGL()
 /////////////////////////////////////////////////////////
 // Virtual Initialisers
 
-// Clone - from another IRenderer which should be of the same type
-void CRendererOGL::Create(IRenderer* pRenderer)
-{
-}
-
-// from a video mode initialisation
-void CRendererOGL::Create(int width, int height, int depth, uint32_t flagsCreation)
+// System-wide initialisation
+void CRendererOGL::Initialise(int width, int height, int depth, uint32_t flagsCreation)
 {
 	m_pSurface = SDL_SetVideoMode(width, height, depth, flagsCreation | SDL_OPENGL);
 
@@ -131,8 +128,8 @@ void CRendererOGL::Create(int width, int height, int depth, uint32_t flagsCreati
 	Init(width, height, depth);
 
 	// Create screen space texture
-	glGenTextures(1, &idTexture);
-	glBindTexture(GL_TEXTURE_2D, idTexture);
+	glGenTextures(1, &m_idTexture);
+	glBindTexture(GL_TEXTURE_2D, m_idTexture);
 
 	// Texture parameters - to get nice filtering 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -147,6 +144,55 @@ void CRendererOGL::Create(int width, int height, int depth, uint32_t flagsCreati
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &m_nHeight);
 }
 
+void CRendererOGL::Clone(IRenderer& renderer)
+{
+	if (GetType() == renderer.GetType())
+	{
+		// Bind the source texture
+		GLuint sourceTexture = dynamic_cast<CRendererOGL*>(&renderer)->m_idTexture;
+		glBindTexture(GL_TEXTURE_2D, sourceTexture);
+
+		// Get the texture parameters
+		GLint width, height, internalFormat;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &internalFormat);
+
+		// Allocate memory and get texture data
+		GLubyte* data = new GLubyte[width * height * 4];		// Assuming 4 bytes per pixel (e.g., RGBA8)
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data); // Assuming format is RGBA
+
+		// Create and bind the new texture
+		glGenTextures(1, &m_idTexture);
+		glBindTexture(GL_TEXTURE_2D, m_idTexture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+		// Clean up
+		delete[] data;
+	}
+}
+
+// Clone - from another IRenderer which should be of the same type
+void CRendererOGL::Create(IRenderer &renderer)
+{
+	if (GetType() == renderer.GetType())
+	{
+		m_idTexture = dynamic_cast<CRendererOGL*>(&renderer)->m_idTexture;
+		m_nWidth = dynamic_cast<CRendererOGL*>(&renderer)->m_nWidth;
+		m_nHeight = dynamic_cast<CRendererOGL*>(&renderer)->m_nHeight;
+		m_fRotate = dynamic_cast<CRendererOGL*>(&renderer)->m_fRotate;
+		m_bColorKey = dynamic_cast<CRendererOGL*>(&renderer)->m_bColorKey;
+		m_colorKey = dynamic_cast<CRendererOGL*>(&renderer)->m_colorKey;
+	}
+}
+
+
 
 // memory canvas
 void CRendererOGL::Create(int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask)
@@ -154,8 +200,8 @@ void CRendererOGL::Create(int width, int height, int depth, uint32_t Rmask, uint
 	// sorry, we simply ignore depth and masks...
 	
 	// Create screen space texture
-	glGenTextures(1, &idTexture);
-	glBindTexture(GL_TEXTURE_2D, idTexture);
+	glGenTextures(1, &m_idTexture);
+	glBindTexture(GL_TEXTURE_2D, m_idTexture);
 
 	// Texture parameters - to get nice filtering 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -173,8 +219,8 @@ void CRendererOGL::Create(int width, int height, int depth, uint32_t Rmask, uint
 void CRendererOGL::Create(int width, int height)
 {
 	// Create screen space texture
-	glGenTextures(1, &idTexture);
-	glBindTexture(GL_TEXTURE_2D, idTexture);
+	glGenTextures(1, &m_idTexture);
+	glBindTexture(GL_TEXTURE_2D, m_idTexture);
 
 	// Texture parameters - to get nice filtering 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -192,16 +238,18 @@ void CRendererOGL::Create(int width, int height)
 // from a loaded bitmap
 void CRendererOGL::Create(string sFileName)
 {
-	idTexture = *c_filemgr.Load(sFileName);
+	m_idTexture = *c_filemgr.Load(sFileName);
+
+	glBindTexture(GL_TEXTURE_2D, m_idTexture);
 
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &m_nWidth);
 	glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &m_nHeight);
 
-	rotate = 0;
+	m_fRotate = 0;
 }
 
 // Rectangular Fragment
-void CRendererOGL::Create(IRenderer *pRenderer, CRectangle rect)
+void CRendererOGL::Create(shared_ptr<IRenderer> pRenderer, CRectangle rect)
 {
 }
 
@@ -210,7 +258,7 @@ void CRendererOGL::Create(string sFileName, CRectangle rect)
 }
 
 // Tiled Fragment
-void CRendererOGL::Create(IRenderer *pRenderer, short numCols, short numRows, short iCol, short iRow)
+void CRendererOGL::Create(shared_ptr<IRenderer> pRenderer, short numCols, short numRows, short iCol, short iRow)
 {
 }
 
@@ -279,6 +327,10 @@ void CRendererOGL::Init(int width, int height, int depth)
 	// choose the shader program to use
 	glUseProgram(c_idShaders);
 
+	// determine subroutine ids
+	c_idSubroutineTexture = glGetSubroutineIndex(c_idShaders, GL_FRAGMENT_SHADER, "renderTexture");
+	c_idSubroutineTextureColorKey = glGetSubroutineIndex(c_idShaders, GL_FRAGMENT_SHADER, "renderTextureColorKey");
+	c_idSubroutineColorSolid = glGetSubroutineIndex(c_idShaders, GL_FRAGMENT_SHADER, "renderColorSolid");
 
 	// setup the screen background colour
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -312,21 +364,20 @@ void CRendererOGL::Init(int width, int height, int depth)
 void CRendererOGL::BlitMe(CRectangle& rectDest, CRectangle& rectSrc)
 {
 	// Bind the texture to use
-	glBindTexture(GL_TEXTURE_2D, idTexture);
+	glBindTexture(GL_TEXTURE_2D, m_idTexture);
 
 	// Setup OpenGL transformations represented as a 4D(!) matrix
 	// 2D graphics shouls only require 3D matrices, but GLM library is optimised for 3D use
 	glm::mat4 m = glm::mat4(1);
 	m = glm::translate(m, glm::vec3((float)rectDest.x, (float)rectDest.y, 0));
-	m = glm::rotate(m, glm::radians(rotate), glm::vec3(0, 0, 1));
+	m = glm::rotate(m, glm::radians(m_fRotate), glm::vec3(0, 0, 1));
 	m = glm::scale(m, glm::vec3(GetWidth(), GetHeight(), 1));
 
 	// send the "model-view" matrix to GPU
 	glUniformMatrix4fv(glGetUniformLocation(c_idShaders, "matrixModelView"), 1, GL_FALSE, &m[0][0]);
 
-	// additional configuration of the "color key" (transparency)
-	glUniform3f(glGetUniformLocation(c_idShaders, "colorKey"), 0, 0, 1);
-	glUniform1f(glGetUniformLocation(c_idShaders, "colorKeyMul"), 1);
+	// choose the subroutine
+	glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, 1, m_bColorKey ? &c_idSubroutineTextureColorKey : &c_idSubroutineTexture);
 
 	// Standard OpenGL buffer rendering
 	// enable vertex arrays
@@ -390,9 +441,12 @@ std::string CRendererOGL::FindPathStr(std::string filename)
 /////////////////////////////////////////////////////////
 // RotoZoom: create a clone object, rotated and zoomed
 
-CRendererOGL* CRendererOGL::CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth)
+shared_ptr<IRenderer> CRendererOGL::CreateRotozoom(double angle, double zoomx, double zoomy, bool smooth)
 {
-	return this;
+	auto pRotozoom = make_shared<CRendererOGL>();
+	pRotozoom->Create(*this);
+	pRotozoom->m_fRotate = (float)angle;
+	return pRotozoom;
 }
 
 /////////////////////////////////////////////////////////
@@ -419,39 +473,36 @@ CColor CRendererOGL::MatchColor(CColor color)
 /////////////////////////////////////////////////////////
 // Color Key (Trasnparent Color)
 
-void CRendererOGL::SetColorKey(CColor& color)
+void CRendererOGL::SetColorKey(CColor color)
 {
-	//if (!m_pSurface) return;
-	//uint32_t col = SDL_MapRGBA(m_pSurface->format, color.R(), color.G(), color.B(), color.A());
-	//SDL_SetColorKey(m_pSurface, SDL_SRCCOLORKEY, col);
+	m_bColorKey = true;
+	m_colorKey = color;
+
+	// additional configuration of the "color key" (transparency)
+	glUniform3f(glGetUniformLocation(c_idShaders, "colorKey"), (float)color.r / 255.0f, (float)color.g / 255.0f, (float)color.b/255.0f);
+	glUniform1f(glGetUniformLocation(c_idShaders, "colorKeyMul"), 1);
 }
 
 bool CRendererOGL::IsColorKeySet()
 {
-//	return m_pSurface && ((m_pSurface->flags & SDL_SRCCOLORKEY) != 0);
-	return false;
+	return m_bColorKey;
 }
 
 CColor CRendererOGL::GetColorKey()
 {
-	//if (!m_pSurface) return CColor::Black();
-
-	//uint32_t col = m_pSurface->format->colorkey;
-	//CColor color;
-	//SDL_GetRGBA(col, m_pSurface->format, &color.R(), &color.G(), &color.B(), &color.A());
-	//return (color);
-	return CColor::Black();
+	return m_colorKey;
 }
 
 void CRendererOGL::ClearColorKey()
 {
-//	if (m_pSurface) SDL_SetColorKey(m_pSurface, 0, 0);
+	m_bColorKey = false;
+	m_colorKey = CColor::Black();
 }
 
 /////////////////////////////////////////////////////////
 // Pixel collision function
 
-bool CRendererOGL::HitTest(int ax, int ay, IRenderer* pOther, int bx, int by, int nSkip)
+bool CRendererOGL::HitTest(int ax, int ay, shared_ptr<IRenderer> pOther, int bx, int by, int nSkip)
 {
 	//if (!m_pSurface || !pOther || !pOther->GetSurface()) return false;
 	//SDL_Surface* pOtherSurface = static_cast<SDL_Surface*>(pOther->GetSurface());
@@ -660,14 +711,14 @@ void CRendererOGL::GetFontSize(int& size, int& height, int& width, int& ascent, 
 	baseline = leading - height - descent;
 }
 
-IRenderer* CRendererOGL::GetTextGraphics(std::string pText)
+shared_ptr<IRenderer> CRendererOGL::GetTextGraphics(std::string pText)
 {
 	if (!m_pFont)
 		SetFont(0);
 	return GetTextGraphics(m_pFont, m_textColor, pText);
 }
 
-IRenderer* CRendererOGL::GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText)
+shared_ptr<IRenderer> CRendererOGL::GetTextGraphics(std::string fontFace, int nPtSize, CColor color, std::string pText)
 {
 	if (nPtSize == 0) nPtSize = m_nPtSize;
 	if (m_nPtSize == 0) nPtSize = 18;
@@ -675,11 +726,11 @@ IRenderer* CRendererOGL::GetTextGraphics(std::string fontFace, int nPtSize, CCol
 }
 
 
-IRenderer* CRendererOGL::GetTextGraphics(void* pFont, CColor textColor, std::string pText)
+shared_ptr<IRenderer> CRendererOGL::GetTextGraphics(void* pFont, CColor textColor, std::string pText)
 {
 	if (!pFont) return NULL;
 	SDL_Surface* pSurface = TTF_RenderText_Blended(static_cast<_TTF_Font*>(pFont), pText.c_str(), *(SDL_Color*)&textColor.r);
-	CRendererOGL* pRenderer = new CRendererOGL();
+	auto pRenderer = make_shared<CRendererOGL>();
 	pRenderer->CreateFromSurface(pSurface);
 	return pRenderer;
 }
